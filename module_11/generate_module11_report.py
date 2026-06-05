@@ -185,7 +185,7 @@ class CoverPage(Flowable):
         
         c.setFont('Helvetica-Bold', 18)
         c.setFillColor(white)
-        c.drawCentredString(W/2, H*0.70, 'MODULE 11: IDENTITY FRAUD')
+        c.drawCentredString(W/2, H*0.70, 'COMPREHENSIVE IDENTITY FRAUD REPORT')
         
         c.setFont('Helvetica', 10)
         c.setFillColor(HexColor('#aabbcc'))
@@ -247,7 +247,7 @@ def inner_header_footer(canvas, doc):
     """Header and footer matching Module 20 exactly"""
     canvas.saveState()
     canvas.setFont('Helvetica-Bold', 7.5); canvas.setFillColor(DGRAY)
-    canvas.drawString(20*mm, H-12*mm, 'ECHS FRAUD ANALYTICS — MODULE 11: IDENTITY FRAUD DETECTION — CONFIDENTIAL')
+    canvas.drawString(20*mm, H-12*mm, 'ECHS FRAUD ANALYTICS — COMPREHENSIVE IDENTITY FRAUD DETECTION — CONFIDENTIAL')
     canvas.drawRightString(W-20*mm, H-12*mm, f'IIT Kanpur  |  Page {doc.page}')
     canvas.setStrokeColor(MGRAY); canvas.setLineWidth(0.4)
     canvas.line(20*mm, H-14*mm, W-20*mm, H-14*mm)
@@ -292,55 +292,64 @@ def load_csv_data(filepath):
             data.append(row)
     return data
 
+
+import glob
 def get_pattern_summary(data_folder):
-    """Get summary statistics for all patterns - EXCLUDING Pattern 6 & 7"""
     patterns = [
         {
             'num': 1,
             'title': 'Duplicate Card IDs',
-            'file': '01_Duplicate_Card_IDs.csv',
+            'file': '01_Duplicate_Card_IDs*.csv',
             'severity': 'CRITICAL',
             'description': 'Single ECHS card used by multiple service numbers'
         },
         {
             'num': 2,
             'title': 'Simultaneous Admissions',
-            'file': '02_Simultaneous_Admissions.csv',
+            'file': '02_Simultaneous_Admissions*.csv',
             'severity': 'CRITICAL',
             'description': 'Same beneficiary at 2+ hospitals simultaneously'
         },
         {
             'num': 3,
             'title': 'Duplicate Bill Numbers',
-            'file': '03_Duplicate_Bill_Numbers.csv',
+            'file': '03_Duplicate_Bill_Numbers*.csv',
             'severity': 'HIGH',
             'description': 'Same bill number used multiple times'
         },
         {
             'num': 4,
             'title': 'Mobile Number Rings',
-            'file': '04_Mobile_Number_Rings.csv',
+            'file': '04_Mobile_Number_Rings*.csv',
             'severity': 'HIGH',
             'description': 'Single mobile linked to 5+ cards'
         },
         {
             'num': 5,
             'title': 'UID Duplication',
-            'file': '05_UID_Duplication.csv',
+            'file': '05_UID_Duplication*.csv',
             'severity': 'CRITICAL',
             'description': 'Same Aadhaar UID for multiple service numbers'
         },
         {
             'num': 6,
             'title': 'High Frequency Claims',
-            'file': '08_High_Frequency_Claims.csv',
+            'file': '08_High_Frequency_Claims*.csv',
             'severity': 'HIGH',
             'description': 'Beneficiaries with 10+ claims'
         },
     ]
     
     for pattern in patterns:
-        filepath = os.path.join(data_folder, pattern['file'])
+        if '*' in pattern['file']:
+            files = glob.glob(os.path.join(data_folder, pattern['file']))
+            if files:
+                files.sort(key=os.path.getmtime, reverse=True)
+                filepath = files[0]
+            else:
+                filepath = os.path.join(data_folder, pattern['file'].replace('*', ''))
+        else:
+            filepath = os.path.join(data_folder, pattern['file'])
         data = load_csv_data(filepath)
         pattern['count'] = len(data)
         pattern['data'] = data[:15]  # Top 15 for report
@@ -438,8 +447,9 @@ def build_report():
     
     os.makedirs(reports_folder, exist_ok=True)
     
-    output_file = os.path.join(reports_folder, 
-                               'ECHS_Module11_Identity_Fraud_Report.pdf')
+    import time
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    output_file = os.path.join(reports_folder, f'ECHS_Module11_Identity_Fraud_Report_{ts}.pdf')
     
     # Load pattern data
     patterns = get_pattern_summary(data_folder)
@@ -465,67 +475,75 @@ def build_report():
     # Build story - matching Module 20 template switching
     story = [CoverPage(total_cases, total_amount, patterns_detected), NextPageTemplate('Inner'), PageBreak()]
     
-    # Executive Summary
-    story.append(Paragraph('EXECUTIVE SUMMARY', S_H1))
+    # ANALYSIS OF PATTERNS (Replacing redundant Executive Summary)
+    story.append(Paragraph('ANALYSIS OF PATTERNS & UNIQUE METRICS', S_H1))
     story.append(HRFlowable(width='100%', thickness=0.5, color=GOLD, spaceAfter=6))
     
     story.append(Paragraph(
-        f'This report presents the comprehensive findings of the {bold("Module 11: Identity Fraud Detection")} '
-        f'analysis conducted on the ECHS production database covering {bold("the last 5 years (2021-2026)")}. '
-        f'The analysis examined {bold("26+ million claim records")} to identify systematic identity-related fraud '
-        f'patterns including duplicate identifiers, simultaneous admissions, synthetic identities, and coordinated fraud rings. '
-        f'{bold("Six critical patterns")} were analyzed with complete descriptive information for immediate action.',
+        f'This report presents factual findings of identity fraud across {bold("26+ million records")} over the last 5 years. '
+        f'A total of <font color="#cc2222"><b>{total_cases:,} cases</b></font> have been flagged '
+        f'representing an exposure of <font color="#cc2222"><b>{format_currency(total_amount)}</b></font>. '
+        f'Rather than standard aggregate summaries, the below details exact pattern behaviors and definitions for unique metrics '
+        f'found exclusively in specific tables.',
         S_BODY
     ))
-    story.append(Spacer(1, 5*mm))
+    story.append(Spacer(1, 3*mm))
     
-    # Key findings table
-    key_findings = [
-        ['Metric', 'Value'],
-        ['Total Cases Flagged', f'{total_cases:,} cases'],
-        ['Financial Exposure', format_currency(total_amount)],
-        ['Patterns Analyzed', '6 critical fraud patterns'],
-        ['Patterns with Data', f'{patterns_detected} patterns'],
-        ['Critical Severity', f'{len([p for p in patterns if p["severity"]=="CRITICAL"])} patterns'],
-        ['High Severity', f'{len([p for p in patterns if p["severity"]=="HIGH"])} patterns'],
-        ['Analysis Period', '2021-2026 (5 years)'],
-        ['Data Completeness', '100% - Full descriptive information'],
+    analysis_data = [
+        ['Pattern & Core Metric', 'Factual Definition & Analysis Context'],
+        
+        ['P01: Duplicate Card IDs\\n(Metric: Svc #s)', 
+         'A single physical ECHS health card linked to 3+ distinct ex-serviceman identifiers. '
+         'Indicates severe identity duplication. Svc #s denotes the count of unique identities reusing the same card.'],
+         
+        ['P02: Simultaneous Admissions\\n(Metric: Gap/Overlap)', 
+         'Beneficiary admitted to multiple hospitals simultaneously or consecutively within 7 days. '
+         'Gap/Overlap days <= 7 indicates a physical impossibility or suspicious consecutive admissions (hospital hopping).'],
+         
+        ['P03: Duplicate Bill Numbers\\n(Metric: Dup Count)', 
+         'The exact same bill/invoice number resubmitted for different claims. '
+         'Dup Count tracks how many times the identical bill string (excluding NA/empty) appeared.'],
+         
+        ['P04: Mobile Number Rings\\n(Metric: Cards)', 
+         'A single mobile number attached to 5+ unrelated ECHS cards. '
+         'Legitimate sharing (families) rarely exceeds 3. 5+ indicates a coordinated agent network. Dummy numbers (e.g. 000000) are rigorously filtered out.'],
+         
+        ['P05: UID Duplication\\n(Metric: UID masked)', 
+         'The same 12-digit biometric Aadhaar UID shared across multiple distinct ECHS accounts. '
+         'Reveals either deep synthetic identity creation or mass data-entry fraud. Dummy UIDs are strictly ignored.'],
+         
+        ['P06: High Frequency Claims\\n(Metric: # Claims)', 
+         'Over-utilization detected dynamically. A statistical baseline established a threshold (Q3 + 1.5*IQR) of 13+ claims in 5 years. '
+         '# Claims denotes the exact frequency breaking this outlier threshold.']
     ]
     
-    kf_rows = []
-    for i, row in enumerate(key_findings):
-        if i == 0:  # Header row
-            kf_rows.append([
+    a_rows = []
+    for i, row in enumerate(analysis_data):
+        if i == 0:
+            a_rows.append([
                 Paragraph(bold(row[0]), bs(fontSize=9, textColor=white, fontName='Helvetica-Bold')),
                 Paragraph(bold(row[1]), bs(fontSize=9, textColor=white, fontName='Helvetica-Bold'))
             ])
-        else:  # Data rows
-            # Apply color coding for specific rows
-            value_text = row[1]
-            if i in [1, 2]:  # Cases and exposure - critical
-                value_para = Paragraph(f'<font color="#cc2222"><b>{value_text}</b></font>', bs(fontSize=9))
-            elif i == 8:  # Data completeness - ok
-                value_para = Paragraph(f'<font color="#1a6e1a"><b>{value_text}</b></font>', bs(fontSize=9))
-            else:
-                value_para = Paragraph(value_text, bs(fontSize=9))
-            
-            kf_rows.append([
-                Paragraph(row[0], bs(fontSize=9, fontName='Helvetica-Bold', textColor=NAVY)),
-                value_para
+        else:
+            a_rows.append([
+                Paragraph(row[0], bs(fontSize=8.5, fontName='Helvetica-Bold', textColor=NAVY)),
+                Paragraph(row[1], bs(fontSize=8.5, leading=11, textColor=DGRAY))
             ])
+            
+    a_tbl = Table(a_rows, colWidths=[55*mm, 120*mm])
+    a_tbl.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), NAVY),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 0.5, MGRAY),
+        ('BACKGROUND', (0,1), (0,-1), LGRAY),
+    ]))
     
-    t = Table(kf_rows, colWidths=[70*mm, 105*mm])
-    t.setStyle(tbl_style(font_size=9))
-    story.append(t)
+    story.append(a_tbl)
     story.append(Spacer(1, 5*mm))
-    
-    story.append(Paragraph(
-        f'The analysis identified <font color="#cc2222"><b>{total_cases:,} cases</b></font> requiring immediate investigation '
-        f'with an estimated financial exposure of <font color="#cc2222"><b>{format_currency(total_amount)}</b></font>. '
-        f'All flagged cases include complete descriptive information (hospital names, beneficiary details, '
-        f'patient demographics, claim amounts) enabling immediate action without additional database queries.',
-        S_BODY
-    ))
     
     story.append(PageBreak())
     
@@ -555,24 +573,39 @@ def build_report():
         story.append(Spacer(1, 4*mm))
         
         # Build data table
-        p01_data = [['Card Number', 'Svc #s', 'Names', 'Claims', 'Hospitals', 'Total Claimed', 'Total Approved', 'Span (days)']]
+        p01_data = [['Card Number', 'Svc #s', 'Names', 'Claims', 'Hospitals', 'Total Exposure']]
         for row in patterns[0]['data'][:15]:
+            # Handle Names
+            names_text = str(row.get('beneficiary_names', ''))
+            if not names_text:
+                names_text = str(row.get('unique_names', '0'))
+            else:
+                names_text = names_text.replace(' | ', ', ')
+                if len(names_text) > 30: names_text = names_text[:27] + '...'
+                
+            # Handle Hospitals
+            unique_hospitals = int(row.get('unique_hospitals', 0))
+            if unique_hospitals <= 4 and row.get('hospitals_used'):
+                hosps = [h.split(':', 1)[-1] for h in row.get('hospitals_used').split(' | ')]
+                hosp_text = ', '.join(hosps)
+                if len(hosp_text) > 40: hosp_text = hosp_text[:37] + '...'
+            else:
+                hosp_text = str(unique_hospitals)
+                
             p01_data.append([
                 Paragraph(row.get('card_number', '')[:14], bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('unique_service_numbers', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('unique_names', '0')), bs(fontSize=7, leading=10)),
+                Paragraph(names_text, bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('total_claims', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('unique_hospitals', '0')), bs(fontSize=7, leading=10)),
+                Paragraph(hosp_text, bs(fontSize=7, leading=10)),
                 Paragraph(format_currency(row.get('total_claimed_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(row.get('total_approved_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('fraud_span_days', '0')), bs(fontSize=7, leading=10)),
             ])
         
-        p01_tbl = Table(p01_data, colWidths=[24*mm, 15*mm, 15*mm, 15*mm, 18*mm, 26*mm, 26*mm, 20*mm])
+        p01_tbl = Table(p01_data, colWidths=[24*mm, 15*mm, 35*mm, 15*mm, 40*mm, 25*mm])
         p01_tbl.setStyle(tbl_style(font_size=7))
         story.append(p01_tbl)
         story.append(Spacer(1, 3*mm))
-        story.append(cap('Svc #s = Unique Service Numbers using same card. Span = Days between first and last claim. Full data in CSV file.'))
+        story.append(cap('Svc #s = Unique Service Numbers using same card. Full data in CSV file.'))
         story.append(PageBreak())
     
     # PATTERN 02: SIMULTANEOUS ADMISSIONS
@@ -587,46 +620,21 @@ def build_report():
         ))
         story.append(Spacer(1, 4*mm))
         
-        # Check if amounts are available
-        has_amounts = False
+        p02_data = [['Beneficiary', 'Hospital 1', 'Hospital 2', 'Gap/Overlap', 'Total Exposure']]
         for row in patterns[1]['data'][:15]:
-            amt1 = float(row.get('amount_1', 0) or 0)
-            amt2 = float(row.get('amount_2', 0) or 0)
-            if amt1 > 0 or amt2 > 0:
-                has_amounts = True
-                break
-        
-        if has_amounts:
-            # Show with amounts
-            p02_data = [['Service Number', 'Beneficiary', 'Hospital 1', 'Hospital 2', 'Overlap Days', 'Amount 1', 'Amount 2']]
-            for row in patterns[1]['data'][:15]:
-                p02_data.append([
-                    Paragraph(str(row.get('service_number', ''))[:14], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('beneficiary_name', ''))[:22], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('hospital_name_1', ''))[:28], bs(fontSize=6.5, leading=9)),
-                    Paragraph(str(row.get('hospital_name_2', ''))[:28], bs(fontSize=6.5, leading=9)),
-                    Paragraph(str(row.get('overlap_days', '0')), bs(fontSize=7, leading=10)),
-                    Paragraph(format_currency(row.get('amount_1', 0)), bs(fontSize=7, leading=10)),
-                    Paragraph(format_currency(row.get('amount_2', 0)), bs(fontSize=7, leading=10)),
-                ])
-            p02_tbl = Table(p02_data, colWidths=[22*mm, 28*mm, 32*mm, 32*mm, 18*mm, 24*mm, 24*mm])
-        else:
-            # Show without amounts - wider columns for hospitals
-            p02_data = [['Service Number', 'Beneficiary', 'Hospital 1', 'Hospital 2', 'Overlap Days']]
-            for row in patterns[1]['data'][:15]:
-                p02_data.append([
-                    Paragraph(str(row.get('service_number', ''))[:14], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('beneficiary_name', ''))[:25], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('hospital_name_1', ''))[:35], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('hospital_name_2', ''))[:35], bs(fontSize=7, leading=10)),
-                    Paragraph(str(row.get('overlap_days', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
-                ])
-            p02_tbl = Table(p02_data, colWidths=[24*mm, 32*mm, 45*mm, 45*mm, 24*mm])
+            p02_data.append([
+                Paragraph(str(row.get('beneficiary_name', ''))[:25], bs(fontSize=7, leading=10)),
+                Paragraph(str(row.get('hospital_name_1', ''))[:35], bs(fontSize=6.5, leading=9)),
+                Paragraph(str(row.get('hospital_name_2', ''))[:35], bs(fontSize=6.5, leading=9)),
+                Paragraph(str(row.get('gap_days', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
+                Paragraph(format_currency(row.get('total_exposure', 0)), bs(fontSize=7, leading=10)),
+            ])
+        p02_tbl = Table(p02_data, colWidths=[35*mm, 45*mm, 45*mm, 25*mm, 30*mm])
         
         p02_tbl.setStyle(tbl_style(font_size=7))
         story.append(p02_tbl)
         story.append(Spacer(1, 3*mm))
-        story.append(cap('Overlap Days = Days when patient was simultaneously admitted at both hospitals. Physical impossibility indicates fraud.'))
+        story.append(cap('Gap/Overlap = Gap between admissions. Gap <= 7 days indicates fraud. Physical impossibility (overlap) or quick hop.'))
         story.append(PageBreak())
     
     # PATTERN 03: DUPLICATE BILL NUMBERS
@@ -640,21 +648,43 @@ def build_report():
         ))
         story.append(Spacer(1, 4*mm))
         
-        p03_data = [['Bill Number', 'Bill Date', 'Duplicate Count', 'Total Amount', 'Hospitals', 'Claims']]
+        p03_data = [['Bill Number', 'Bill Date', 'Dup Count', 'Beneficiaries', 'Hospitals', 'Total Exposure']]
         for row in patterns[2]['data'][:15]:
             bill_no = str(row.get('bill_number', ''))
             if len(bill_no) > 22:
                 bill_no = bill_no[:19] + '...'
+            
+            # Handle Beneficiaries - show names if few
+            beneficiaries = str(row.get('beneficiaries', ''))
+            if beneficiaries:
+                names = [b.split(':', 1)[-1] if ':' in b else b for b in beneficiaries.split(' | ')]
+                ben_text = ', '.join(names)
+                if len(ben_text) > 30: ben_text = ben_text[:27] + '...'
+            else:
+                ben_text = str(row.get('card_numbers', ''))[:20]
+            
+            # Handle Hospitals - show names if few
+            hospitals_raw = str(row.get('hospitals', ''))
+            if hospitals_raw:
+                hosps = [h.split(':', 1)[-1] if ':' in h else h for h in hospitals_raw.split(' | ')]
+                if len(hosps) <= 4:
+                    hosp_text = ', '.join(hosps)
+                    if len(hosp_text) > 35: hosp_text = hosp_text[:32] + '...'
+                else:
+                    hosp_text = str(len(hosps))
+            else:
+                hosp_text = '?'
+                
             p03_data.append([
                 Paragraph(bill_no, bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('bill_date', ''))[:10], bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('duplicate_count', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
-                Paragraph(format_currency(row.get('total_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('hospitals', ''))[:35], bs(fontSize=6.5, leading=9)),
-                Paragraph(str(str(row.get('claim_ids', '')).count('|') + 1 if row.get('claim_ids') else 0), bs(fontSize=7, leading=10)),
+                Paragraph(ben_text, bs(fontSize=7, leading=10)),
+                Paragraph(hosp_text, bs(fontSize=6.5, leading=9)),
+                Paragraph(format_currency(row.get('total_exposure', row.get('total_amount', 0))), bs(fontSize=7, leading=10)),
             ])
         
-        p03_tbl = Table(p03_data, colWidths=[30*mm, 20*mm, 20*mm, 26*mm, 50*mm, 18*mm])
+        p03_tbl = Table(p03_data, colWidths=[28*mm, 18*mm, 16*mm, 35*mm, 40*mm, 25*mm])
         p03_tbl.setStyle(tbl_style(font_size=7))
         story.append(p03_tbl)
         story.append(Spacer(1, 3*mm))
@@ -666,29 +696,44 @@ def build_report():
         story.append(PatternBanner('P11-04', 'Mobile Number Rings — Fraud Network Detection',
                                    f'{patterns[3]["count"]} Cases Detected'))
         story.append(Paragraph(
-            f'Single mobile number linked to 5+ unrelated ECHS cards (fraud ring indicator). '
-            f'<font color="#d46a00"><b>{patterns[3]["count"]} cases detected</b></font>. Top 15 by card count shown.',
+            f'A Mobile Number Ring is when a single mobile number is linked to 5+ distinct ECHS cards '
+            f'belonging to different service numbers (ex-servicemen). Legitimate sharing is 2-3 cards within '
+            f'a family; 5+ cards indicate a coordinated fraud agent filing claims for multiple identities. '
+            f'<font color="#d46a00"><b>{patterns[3]["count"]} rings detected</b></font>. Top 15 by total exposure shown. '
+            f'Dummy/invalid numbers are excluded and reported separately.',
             S_BODY
         ))
         story.append(Spacer(1, 4*mm))
         
-        p04_data = [['Mobile Number', 'Cards', 'Service #s', 'Claims', 'Hospitals', 'Total Claimed', 'Span (days)']]
+        p04_data = [['Mobile Number', 'Cards', 'Svc Numbers', 'Claims', 'Hospitals', 'Total Exposure']]
         for row in patterns[3]['data'][:15]:
+            # Handle Hospitals - show names if 1-4, else count
+            unique_hospitals = int(row.get('unique_hospitals', 0))
+            hospitals_raw = str(row.get('hospitals_used', ''))
+            if unique_hospitals <= 4 and hospitals_raw:
+                hosps = [h.split(':', 1)[-1] if ':' in h else h for h in hospitals_raw.split(' | ')]
+                hosp_text = ', '.join(hosps)
+                if len(hosp_text) > 35: hosp_text = hosp_text[:32] + '...'
+            else:
+                hosp_text = str(unique_hospitals)
+                
+            # Service numbers - show count of unique ex-servicemen sharing this mobile
+            svc_count = str(row.get('unique_service_numbers', '0'))
+            
             p04_data.append([
-                Paragraph(str(row.get('mobile_number', ''))[:10], bs(fontSize=7, leading=10, fontName='Courier')),
+                Paragraph(str(row.get('mobile_number', ''))[:12], bs(fontSize=7, leading=10, fontName='Courier')),
                 Paragraph(str(row.get('unique_cards', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
-                Paragraph(str(row.get('unique_service_numbers', '0')), bs(fontSize=7, leading=10)),
+                Paragraph(svc_count, bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('total_claims', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('unique_hospitals', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(row.get('total_claimed_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(str(int(float(row.get('last_claim_date', '0')[:4]) - float(row.get('first_claim_date', '0')[:4])) * 365 if row.get('first_claim_date') and row.get('last_claim_date') else '0'), bs(fontSize=7, leading=10)),
+                Paragraph(hosp_text, bs(fontSize=6.5, leading=9)),
+                Paragraph(format_currency(row.get('total_exposure', row.get('total_claimed_amount', 0))), bs(fontSize=7, leading=10)),
             ])
         
-        p04_tbl = Table(p04_data, colWidths=[22*mm, 16*mm, 18*mm, 16*mm, 18*mm, 28*mm, 22*mm])
+        p04_tbl = Table(p04_data, colWidths=[22*mm, 14*mm, 16*mm, 14*mm, 48*mm, 25*mm])
         p04_tbl.setStyle(tbl_style(font_size=7))
         story.append(p04_tbl)
         story.append(Spacer(1, 3*mm))
-        story.append(cap('Cards = Number of unique ECHS cards linked to same mobile number. Indicates coordinated fraud ring.'))
+        story.append(cap('Cards = Unique ECHS health cards on same mobile. Svc Numbers = Distinct ex-serviceman IDs sharing the mobile. Total Exposure = Sum of all claims. Dummy numbers excluded.'))
         story.append(PageBreak())
     
     # PATTERN 05: UID DUPLICATION
@@ -702,21 +747,30 @@ def build_report():
         ))
         story.append(Spacer(1, 4*mm))
         
-        p05_data = [['UID (masked)', 'Service #s', 'Cards', 'Claims', 'Hospitals', 'Total Claimed', 'Total Approved']]
+        p05_data = [['UID (masked)', 'Service #s', 'Claims', 'Hospitals', 'Total Exposure']]
         for row in patterns[4]['data'][:15]:
             uid = str(row.get('uid_number', ''))
             masked_uid = uid[:4] + '****' + uid[-4:] if len(uid) == 12 else uid
+            
+            # Handle Hospitals - show names if 1-4, else count
+            unique_hospitals = int(row.get('unique_hospitals', 0))
+            hospitals_raw = str(row.get('hospitals_used', ''))
+            if unique_hospitals <= 4 and hospitals_raw:
+                hosps = [h.split(':', 1)[-1] if ':' in h else h for h in hospitals_raw.split(' | ')]
+                hosp_text = ', '.join(hosps)
+                if len(hosp_text) > 35: hosp_text = hosp_text[:32] + '...'
+            else:
+                hosp_text = str(unique_hospitals)
+                
             p05_data.append([
                 Paragraph(masked_uid, bs(fontSize=7, leading=10, fontName='Courier')),
                 Paragraph(str(row.get('unique_service_numbers', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
-                Paragraph(str(row.get('unique_cards', '0')), bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('total_claims', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('unique_hospitals', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(row.get('total_claimed_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(row.get('total_approved_amount', 0)), bs(fontSize=7, leading=10)),
+                Paragraph(hosp_text, bs(fontSize=6.5, leading=9)),
+                Paragraph(format_currency(row.get('total_exposure', row.get('total_claimed_amount', 0))), bs(fontSize=7, leading=10)),
             ])
         
-        p05_tbl = Table(p05_data, colWidths=[24*mm, 18*mm, 16*mm, 16*mm, 18*mm, 28*mm, 28*mm])
+        p05_tbl = Table(p05_data, colWidths=[28*mm, 20*mm, 18*mm, 52*mm, 30*mm])
         p05_tbl.setStyle(tbl_style(font_size=7))
         story.append(p05_tbl)
         story.append(Spacer(1, 3*mm))
@@ -730,28 +784,46 @@ def build_report():
     if len(patterns) > 5 and patterns[5]['count'] > 0:
         story.append(PatternBanner('P11-06', 'High Frequency Claims — Over-Utilization',
                                    f'{patterns[5]["count"]} Cases Detected'))
+        import glob
+        import re
+        threshold_info = "calculated dynamically based on statistical median of all 5-year claims"
+        # Try to read the threshold metadata file
+        meta_files = glob.glob('/home/aman/Desktop/echs_analysis/module_11/data/08_High_Frequency_Threshold*.txt')
+        if meta_files:
+            meta_files.sort(key=os.path.getmtime, reverse=True)
+            with open(meta_files[0], 'r') as m_file:
+                m_content = m_file.read()
+                m_match = re.search(r'Threshold Used \(Q3 \+ 1\.5\*IQR\): (\d+)', m_content)
+                if m_match:
+                    threshold_info = f"dynamically calculated statistical outlier threshold ({m_match.group(1)} claims)"
+
         story.append(Paragraph(
-            f'Beneficiaries with 10+ claims in 5 years (indicates potential over-utilization or fraud). '
-            f'<font color="#d46a00"><b>{patterns[5]["count"]} cases detected</b></font>. Top 15 by claim count shown.',
+            f'Beneficiaries with claims exceeding the {threshold_info}. Indicates potential over-utilization or fraud. '
+            f'<font color="#d46a00"><b>{patterns[5]["count"]} cases detected</b></font>. Top 15 by total exposure shown.',
             S_BODY
         ))
         story.append(Spacer(1, 4*mm))
         
-        p08_data = [['Service #', 'Beneficiary', '# Claims', '# Hosps', 'Years Active', 'Total Claimed', 'Avg/Claim', 'Span (days)']]
+        p08_data = [['Service #', 'Beneficiary', '# Claims', 'Hospitals', 'Total Exposure']]
         for row in patterns[5]['data'][:15]:
-            avg_amt = float(row.get('total_claimed_amount', 0)) / max(int(row.get('total_claims', 1)), 1)
+            unique_hospitals = int(row.get('unique_hospitals', 0))
+            hospitals_raw = str(row.get('hospitals_used', ''))
+            if unique_hospitals <= 4 and hospitals_raw:
+                hosps = [h.split(':', 1)[-1] if ':' in h else h for h in hospitals_raw.split(' | ')]
+                hosp_text = ', '.join(hosps)
+                if len(hosp_text) > 35: hosp_text = hosp_text[:32] + '...'
+            else:
+                hosp_text = str(unique_hospitals)
+                
             p08_data.append([
                 Paragraph(str(row.get('service_number', ''))[:12], bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('beneficiary_name', ''))[:18], bs(fontSize=7, leading=10)),
+                Paragraph(str(row.get('beneficiary_name', ''))[:22], bs(fontSize=7, leading=10)),
                 Paragraph(str(row.get('total_claims', '0')), bs(fontSize=7, leading=10, textColor=RED, fontName='Helvetica-Bold')),
-                Paragraph(str(row.get('unique_hospitals', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('years_with_claims', '0')), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(row.get('total_claimed_amount', 0)), bs(fontSize=7, leading=10)),
-                Paragraph(format_currency(avg_amt), bs(fontSize=7, leading=10)),
-                Paragraph(str(row.get('fraud_span_days', '0')), bs(fontSize=7, leading=10)),
+                Paragraph(hosp_text, bs(fontSize=6.5, leading=9)),
+                Paragraph(format_currency(row.get('total_exposure', row.get('total_claimed_amount', 0))), bs(fontSize=7, leading=10)),
             ])
         
-        p08_tbl = Table(p08_data, colWidths=[20*mm, 26*mm, 16*mm, 16*mm, 18*mm, 26*mm, 22*mm, 20*mm])
+        p08_tbl = Table(p08_data, colWidths=[24*mm, 34*mm, 18*mm, 45*mm, 27*mm])
         p08_tbl.setStyle(tbl_style(font_size=7))
         story.append(p08_tbl)
         story.append(Spacer(1, 3*mm))

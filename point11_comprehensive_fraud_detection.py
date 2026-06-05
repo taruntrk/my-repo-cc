@@ -41,9 +41,8 @@ queries = {
             AND ci.CI_CARD_ID IS NOT NULL
             AND ci.CI_CARD_ID != ''
         GROUP BY ci.CI_CARD_ID
-        HAVING COUNT(DISTINCT ci.CI_SERVICE_NO) > 1
-        ORDER BY total_claimed_amount DESC
-        LIMIT 500;
+        HAVING COUNT(DISTINCT ci.CI_SERVICE_NO) >= 3
+        ORDER BY total_claimed_amount DESC;
     """,
     
     "02_Simultaneous_Admissions": """
