@@ -2,13 +2,17 @@ import paramiko
 import csv
 import datetime
 
-SSH_HOST = 'samar.iitk.ac.in'
-SSH_PORT = 22
-SSH_USER = 'echs_aman'
-SSH_PASS = 'aman@2026'
-DB_USER = 'aman'
-DB_PASS = 'aman@2026'
-DB_NAME = 'ECHS'
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+SSH_HOST = os.getenv('SSH_HOST')
+SSH_PORT = int(os.getenv('SSH_PORT', 22))
+SSH_USER = os.getenv('SSH_USER')
+SSH_PASS = os.getenv('SSH_PASS')
+DB_USER  = os.getenv('DB_USER')
+DB_PASS  = os.getenv('DB_PASS')
+DB_NAME  = os.getenv('DB_NAME')
 
 queries = {
     "08_High_Frequency_Claims": """
