@@ -43,3 +43,8 @@ Thumbs.db
 
 # Logs
 *.log
+# data files
+*.csv
+*/data/
+module_11/data/
+module_12/data/

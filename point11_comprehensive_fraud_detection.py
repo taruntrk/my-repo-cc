@@ -4,14 +4,17 @@ import datetime
 import json
 
 # Database credentials
-SSH_HOST = 'samar.iitk.ac.in'
-SSH_PORT = 22
-SSH_USER = 'echs_aman'
-SSH_PASS = 'aman@2026'
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-DB_USER = 'aman'
-DB_PASS = 'aman@2026'
-DB_NAME = 'ECHS'
+SSH_HOST = os.getenv('SSH_HOST')
+SSH_PORT = int(os.getenv('SSH_PORT', 22))
+SSH_USER = os.getenv('SSH_USER')
+SSH_PASS = os.getenv('SSH_PASS')
+DB_USER  = os.getenv('DB_USER')
+DB_PASS  = os.getenv('DB_PASS')
+DB_NAME  = os.getenv('DB_NAME')
 
 # All comprehensive fraud detection queries for Point 11
 queries = {
@@ -41,9 +44,8 @@ queries = {
             AND ci.CI_CARD_ID IS NOT NULL
             AND ci.CI_CARD_ID != ''
         GROUP BY ci.CI_CARD_ID
-        HAVING COUNT(DISTINCT ci.CI_SERVICE_NO) > 1
-        ORDER BY total_claimed_amount DESC
-        LIMIT 500;
+        HAVING COUNT(DISTINCT ci.CI_SERVICE_NO) >= 3
+        ORDER BY total_claimed_amount DESC;
     """,
     
     "02_Simultaneous_Admissions": """
