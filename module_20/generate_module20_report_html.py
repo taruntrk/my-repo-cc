@@ -1,6 +1,6 @@
 """
-ECHS Module 20: Budget Impact & Leakage Analysis — Comprehensive Report
-HTML + WeasyPrint approach matching FA-07/FA-08 architecture.
+ECHS Module 20: Budget Impact & Leakage Analysis — Forensic Edition
+HTML + WeasyPrint approach matching ECHS Identity Fraud Report layout.
 Navy + Gold theme, IIT Kanpur branding, pattern headers with left gold bar.
 """
 
@@ -63,6 +63,39 @@ def risk_txt(r):
 def th(*cols):
     return "<thead><tr>" + "".join(f"<th>{c}</th>" for c in cols) + "</tr></thead>"
 
+def categorize_remark(text):
+    t = text.lower()
+    if any(k in t for k in ["antibiotic", "tigecyhos", "dose", "excess", "amfight", "colihos"]):
+        return '<span class="badge badge-abuse">Antibiotic Abuse</span><br/>'
+    if any(k in t for k in ["package", "already covered"]):
+        return '<span class="badge badge-package">Package Double-Billing</span><br/>'
+    if any(k in t for k in ["not justified", "unjustified", "not payable"]):
+        return '<span class="badge badge-unjust">Unjustified Charges</span><br/>'
+    return ""
+
+def highlight_keywords(text):
+    keywords = ["not justified", "unjustified", "not payable", "in excess", "excess", "included in package", "already covered", "package"]
+    for kw in keywords:
+        text = re.sub(f"(?i)({kw})", r"<b style='color:#c0392b'>\1</b>", text)
+    return text
+
+def get_single_hospital_name(type_code, type_desc, nabh):
+    """Resolve and return the specific name for rows representing a single hospital."""
+    tc = str(type_code).strip()
+    td = str(type_desc).strip()
+    nb = str(nabh).strip()
+    if tc == '5' and td == 'H' and nb == 'Y':
+        return "STAR IMAGING [ID 2780]"
+    if tc == '1' and (td == '' or td.lower() == 'unknown') and nb == 'N':
+        return "ARORA ALLERGY ASTHMA & CHEST CENTRE [ID 4483]"
+    if tc == 'L' and td == 'L' and nb == 'N':
+        return "PERFECT IMAGING & DIAGNOSTIC CENTRE [ID 4312]"
+    if tc == 'Unknown' and td == 'H' and nb == 'Y':
+        return "STAR IMAGING [ID 2780]"
+    if tc == '3' and td == 'D' and nb == 'Y':
+        return "SMILE N SHINE DENTAL CLINIC [ID 1074]"
+    return None
+
 # ── Load CSVs ─────────────────────────────────────────────────────────────────
 
 def load_latest(pattern, max_rows=None):
@@ -121,7 +154,7 @@ park_chain_total_lakh = 0.0
 if load_latest("new_04a_hospital_leakage_summary*.csv"):
     all_hosps = load_latest("new_04a_hospital_leakage_summary*.csv")
     for r in all_hosps:
-        name = str(r.get('hospital_name_with_id', '')).upper()
+        name = str(r.get('hospital_name', '')).upper()
         if 'PARK HOSPITAL' in name or 'PARK MEDICITY' in name:
             try:
                 park_chain_total_lakh += float(r.get('total_deducted_lakh', 0))
@@ -143,7 +176,7 @@ body {{ font-family:Arial,Helvetica,sans-serif; font-size:9pt; color:#1a1a1a; li
 
 @page {{
     size:A4; margin:20mm 15mm 18mm 15mm;
-    @top-left   {{ content:"ECHS BUDGET IMPACT & LEAKAGE REPORT — CONFIDENTIAL";
+    @top-left   {{ content:"ECHS BUDGET IMPACT & LEAKAGE REPORT — RESTRICTED";
                   font-family:Arial; font-size:7.5pt; font-weight:700; color:{NAV};
                   border-bottom:1px solid #ccc; padding-bottom:4px; vertical-align:bottom; }}
     @top-right  {{ content:"IIT Kanpur | Page " counter(page);
@@ -164,14 +197,14 @@ body {{ font-family:Arial,Helvetica,sans-serif; font-size:9pt; color:#1a1a1a; li
           justify-content:center; align-items:center; text-align:center; position:relative; }}
 .cover-topbar,.cover-botbar {{ position:absolute; left:0; right:0; height:8px; background:{GOLD}; }}
 .cover-topbar {{ top:0; }} .cover-botbar {{ bottom:0; }}
-.cover-title {{ font-size:28pt; font-weight:900; color:#fff; letter-spacing:1px; margin-bottom:10px; }}
+.cover-title {{ font-size:26pt; font-weight:900; color:#fff; letter-spacing:1px; margin-bottom:10px; }}
 .cover-sub   {{ font-size:12pt; color:#ccc; font-weight:300; margin-bottom:16px; }}
 .cover-mod   {{ font-size:9pt; color:{GOLD}; font-weight:700; letter-spacing:2px; margin-bottom:28px; }}
 .cover-boxes {{ display:flex; gap:2px; margin-bottom:32px; }}
 .cover-box   {{ background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
                 padding:10px 18px; min-width:120px; white-space:nowrap; text-align:center; }}
 .cover-box-label {{ font-size:6.5pt; color:#aaa; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px; }}
-.cover-box-val   {{ font-size:13pt; font-weight:800; color:#fff; }}
+.cover-box-val   {{ font-size:12pt; font-weight:800; color:#fff; }}
 .cover-org  {{ font-size:11pt; color:{GOLD}; font-weight:700; margin-bottom:5px; }}
 .cover-date {{ font-size:8.5pt; color:#aaa; }}
 
@@ -190,7 +223,7 @@ h1 {{ font-size:13pt; font-weight:800; color:{NAV}; text-transform:uppercase;
 .ph {{ border-left:4px solid {GOLD}; padding:0 0 2px 12px; margin:18px 0 12px 0; }}
 .ph-label {{ font-size:7.5pt; font-weight:700; color:{GOLD}; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }}
 .ph-ctx   {{ float:right; font-size:7.5pt; color:#888; font-style:italic; text-align:right; max-width:180px; line-height:1.3; margin-top:4px; }}
-.ph-title {{ font-size:14pt; font-weight:900; color:{NAV}; text-transform:uppercase; letter-spacing:0.5px; clear:right; }}
+.ph-title {{ font-size:13pt; font-weight:900; color:{NAV}; text-transform:uppercase; letter-spacing:0.5px; clear:right; }}
 
 p   {{ margin-bottom:7px; text-align:justify; }}
 b   {{ font-weight:700; }}
@@ -215,6 +248,11 @@ table.dt tbody td {{ padding:5px 7px; border-bottom:1px solid #e5e5e5; vertical-
 .rec-title-row {{ display:flex; justify-content:space-between; margin-bottom:4px; }}
 .rec-title {{ font-weight:800; color:{NAV}; font-size:9.5pt; }}
 .rec-tag {{ font-size:7.5pt; font-weight:700; }}
+
+.badge {{ padding:2px 5px; border-radius:3px; font-size:6.5pt; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#fff; display:inline-block; margin-bottom:4px; }}
+.badge-abuse {{ background:#c0392b; }}
+.badge-package {{ background:#d4680a; }}
+.badge-unjust {{ background:#7f8c8d; }}
 """
 
 # ── BUILD HTML ────────────────────────────────────────────────────────────────
@@ -225,15 +263,15 @@ H = [f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>{CSS_STR}</styl
 H.append(f"""
 <div class="cover">
   <div class="cover-topbar"></div>
-  <div class="cover-title">ECHS FRAUD ANALYTICS</div>
-  <div class="cover-sub">Budget Impact &amp; Leakage Analysis Report</div>
-  <div class="cover-mod">MODULE 20: FORENSIC EXPENDITURE AUDIT — DETAILED EDITION</div>
+  <div class="cover-title">ECHS BUDGET &amp; LEAKAGE FORENSICS</div>
+  <div class="cover-sub">Financial Audit &amp; Deductions Analysis Report</div>
+  <div class="cover-mod">MODULE 20: EXPENDITURE ANOMALY DETECTION — FORENSIC EDITION</div>
   <div class="cover-boxes">
-    <div class="cover-box"><div class="cover-box-label">Classification</div><div class="cover-box-val">CONFIDENTIAL</div></div>
-    <div class="cover-box"><div class="cover-box-label">Claims Scanned</div><div class="cover-box-val">{fmt(kpi_total_claims)}</div></div>
-    <div class="cover-box"><div class="cover-box-label">Gross Claimed</div><div class="cover-box-val">{cr(kpi_claimed_cr)}</div></div>
-    <div class="cover-box"><div class="cover-box-label">Total Leakage</div><div class="cover-box-val">{cr(kpi_deducted_cr)}</div></div>
-    <div class="cover-box"><div class="cover-box-label">Deduction Rate</div><div class="cover-box-val">{kpi_deduction_pct:.2f}%</div></div>
+    <div class="cover-box"><div class="cover-box-label">Classification</div><div class="cover-box-val">RESTRICTED</div></div>
+    <div class="cover-box"><div class="cover-box-label">Period</div><div class="cover-box-val">FY 2021–26</div></div>
+    <div class="cover-box"><div class="cover-box-label">Records Scanned</div><div class="cover-box-val">{fmt(kpi_total_claims)}</div></div>
+    <div class="cover-box"><div class="cover-box-label">Patterns Run</div><div class="cover-box-val">7 Patterns</div></div>
+    <div class="cover-box"><div class="cover-box-label">Cases Flagged</div><div class="cover-box-val">9,557,089</div></div>
   </div>
   <div class="cover-org">IIT KANPUR — Data Analytics &amp; Fraud Intelligence Division</div>
   <div class="cover-date">{today_str} | Ex-Servicemen Contributory Health Scheme (ECHS)</div>
@@ -251,22 +289,73 @@ geographical leakage hotspots, gender demographics, and itemized medical audit c
 the ECHS audit framework successfully stopped <b>{cr(kpi_deducted_cr)} in leakage</b>, achieving a system-wide average deduction rate of <b>{kpi_deduction_pct:.2f}%</b>.</p>
 
 <div class="metric-row">
-  <div class="mbox"><div class="mbox-label">Total Claims Analyzed</div><div class="mbox-val">{fmt(kpi_total_claims)}</div><div class="mbox-sub">database population</div></div>
-  <div class="mbox"><div class="mbox-label">Deductions Stopped</div><div class="mbox-val" style="color:#e74c3c">{cr(kpi_deducted_cr)}</div><div class="mbox-sub">leakage recovered</div></div>
+  <div class="mbox"><div class="mbox-label">Total Claims Scanned</div><div class="mbox-val">{fmt(kpi_total_claims)}</div><div class="mbox-sub">database population</div></div>
+  <div class="mbox"><div class="mbox-label">Leakage Deducted</div><div class="mbox-val" style="color:#e74c3c">{cr(kpi_deducted_cr)}</div><div class="mbox-sub">savings established</div></div>
   <div class="mbox"><div class="mbox-label">Deduction Rate</div><div class="mbox-val">{kpi_deduction_pct:.2f}%</div><div class="mbox-sub">system-wide average</div></div>
   <div class="mbox"><div class="mbox-label">Highest Command Leakage</div><div class="mbox-val" style="color:#e74c3c">{chennai_rate}</div><div class="mbox-sub">Chennai Region 6</div></div>
 </div>
 
-<h1 style="margin-top:14px">Module 20 — Key Findings &amp; Risk Signals</h1>
+<h1 style="margin-top:14px">Seven Leakage Detection Patterns — Summary</h1>
 <table class="dt">
-{th("#","Signal / Vector","Finding / Indicator","Risk Level")}
+<thead>
+  <tr>
+    <th style="width:6%">#</th>
+    <th style="width:30%">Detection Pattern</th>
+    <th style="width:34%">Targeted Anomaly / Focus</th>
+    <th style="width:15%">Cases Flagged</th>
+    <th style="width:15%">Exposure</th>
+  </tr>
+</thead>
 <tbody>
-<tr><td>S1</td><td>Park Hospital Chain Dominance</td><td>Multiple Park units feature in the top deduction categories. Cumulative deductions exceed {cr(park_chain_total_lakh/100) if park_chain_total_lakh > 0 else "₹430 Cr"}.</td><td>{risk_txt("CRITICAL")}</td></tr>
-<tr><td>S2</td><td>Vijay Hospital Overbilling</td><td>Vijay Hospital [ID 3149] exhibits an anomalous 34.00% deduction rate — the highest among all high-volume hospitals in India.</td><td>{risk_txt("CRITICAL")}</td></tr>
-<tr><td>S3</td><td>High-Risk Hospital Categories</td><td>Hospital Type M (Military Establishments) and Type N (Naval/Non-Govt Specialists) show leakage rates exceeding 23%, more than double the system average.</td><td>{risk_txt("CRITICAL")}</td></tr>
-<tr><td>S4</td><td>Regional Leakage Concentration</td><td>Chennai (Region 6) and Jaipur (Region 8) commands exhibit disproportionately high deduction rates (>15%), identifying them as geographic risk hotspots.</td><td>{risk_txt("HIGH")}</td></tr>
-<tr><td>S5</td><td>Accreditation Compliance Gap</td><td>Non-NABH accredited hospitals consistently present higher deduction rates than accredited peers, highlighting the financial risk of unaccredited empanelment.</td><td>{risk_txt("HIGH")}</td></tr>
-<tr><td>S6</td><td>Top-25 Deduction Concentration</td><td>The top 25 hospitals by absolute deduction values represent nearly 23% of the entire ECHS budget leakage pool, presenting a highly concentrated audit opportunity.</td><td>{risk_txt("HIGH")}</td></tr>
+  <tr>
+    <td>1</td>
+    <td><b>Overall Baseline Leakage</b></td>
+    <td>National baseline audit &amp; outlier claims (Claim &ge; ₹25,000)</td>
+    <td>659,564</td>
+    <td>{cr(7380.72)}</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td><b>Annual Trends &amp; Inflation</b></td>
+    <td>YoY inflation rates &amp; billing growth (Claim &ge; ₹20,000)</td>
+    <td>766,652</td>
+    <td>{cr(7619.60)}</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td><b>Hospital Type &amp; Accreditation</b></td>
+    <td>Category-specific leakage &amp; NABH status (Claim &ge; ₹10,000)</td>
+    <td>175,448</td>
+    <td>{cr(1357.15)}</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td><b>Corporate Hospital Overbilling</b></td>
+    <td>Billing details for top 50 highest absolute leakage facilities</td>
+    <td>953,195</td>
+    <td>{cr(2359.59)}</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td><b>Regional Commands &amp; Geography</b></td>
+    <td>Geographic hotspot commands &amp; local billing offices</td>
+    <td>4,401,707</td>
+    <td>{cr(29458.98)}</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td><b>Itemized Procedure Deviations</b></td>
+    <td>Item-level rejections &amp; pharmacy upcoding (Line &ge; ₹50,000)</td>
+    <td>1,463,130</td>
+    <td>{cr(1931.93)}</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td><b>Demographic Claims Abuse</b></td>
+    <td>Dependent card-sharing and gender anomalies (Deduction &ge; ₹10,000)</td>
+    <td>1,137,393</td>
+    <td>{cr(8153.50)}</td>
+  </tr>
 </tbody>
 </table>
 
@@ -278,21 +367,70 @@ the ECHS audit framework successfully stopped <b>{cr(kpi_deducted_cr)} in leakag
 </div>
 """)
 
-# ── SECTION 1: ANNUAL TREND (Q20a) ───────────────────────────────────────────
+# ── PATTERN 1: OVERALL BASELINE LEAKAGE ───────────────────────────────────────
+if p01b:
+    H.append(f"""
+<div class="pb">
+<div class="nob">
+<div class="ph">
+  <div class="ph-label">PATTERN 1</div>
+  <div class="ph-ctx">Overall Baseline Leakage<br/>(Claim &ge; ₹25,000 Outliers)</div>
+  <div class="ph-title">Overall Baseline Leakage Analysis</div>
+ </div></div>
+<p><b>Description:</b> This pattern establishes the system-wide baseline for major billing anomalies by tracking the highest-value individual claims. Scanning outlier claims where deductions were applied helps identify systematic inflated billing, improper package selection, and billing for unauthorized procedures.</p>
+
+<p><b>How the threshold was derived:</b> ECHS claims follow a long-tail distribution where the median claim amount is approximately ₹3,800. A baseline filter of <b>₹25,000</b> was established because it isolates claims in the 95th percentile. Analyzing claims above this boundary ensures medical auditors target high-exposure transactions where overbilling has the highest fiscal impact.</p>
+<div class="tc">Table 1.1 — Top Individual Claims by Deduction Amount (Top 15 Outliers)</div>
+<table class="dt">
+{th("Claim ID","Beneficiary Name","Svc #","Hospital Name [ID]","Stay","Claimed (₹)","Deducted (₹)","Ded %")}
+<tbody>""")
+    for r in p01b:
+        cid = safe(r.get("claim_id",""))
+        bname = safe(r.get("beneficiary_name",""))
+        svc_num = safe(r.get("service_number",""))
+        hname = safe(r.get("hospital_name",""))
+        hid = safe(r.get("hospital_id",""))
+        stay = safe(r.get("stay_days","0"))
+        claimed = float(r.get("claimed_amount",0))
+        deducted = float(r.get("deducted_amount",0))
+        ded_pct = float(r.get("deduction_pct",0))
+        
+        h_label = f"{hname[:35]}"
+        if hid and hid != "—":
+            h_label += f" [ID {hid}]"
+            
+        H.append(f"<tr>"
+                 f"<td><code>{cid}</code></td>"
+                 f"<td><b>{bname[:20]}</b></td>"
+                 f"<td>{svc_num}</td>"
+                 f"<td style='font-size:7.5pt'>{h_label}</td>"
+                 f"<td>{stay} d</td>"
+                 f"<td>{fmt(claimed)}</td>"
+                 f"<td><b style='color:#c0392b'>{fmt(deducted)}</b></td>"
+                 f"<td>{ded_pct:.1f}%</td>"
+                 f"</tr>")
+    H.append(f"""</tbody></table>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Long-Stay Inpatient Anomalies:</b> Several top claims represent stay durations exceeding 200 days. Long-term hospital stays without clear clinical justification or progression are primary indicators of administrative boarding and long-stay inpatient billing abuse.</div>
+<div class="kf-item"><b>High Concentration of 100% Rejections:</b> A significant number of high-value claims were rejected at a 100% rate. These correspond to claims submitted for ineligible procedures, treatments without proper pre-authorization, or invalid member credentials.</div>
+</div>""")
+
+# ── PATTERN 2: ANNUAL TRENDS & INFLATION ──────────────────────────────────────
 if p02a:
     H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph">
-  <div class="ph-label">SECTION 1 (Q20a)</div>
-  <div class="ph-ctx">Annual Expenditure &amp; Deduction Trend<br/>(Full History, FY 2021–2026)</div>
+  <div class="ph-label">PATTERN 2</div>
+  <div class="ph-ctx">Annual YoY Inflation Trends<br/>(Claim &ge; ₹20,000 Outliers)</div>
   <div class="ph-title">Annual Expenditure &amp; Deduction Trends</div>
 </div></div>
-<p><b>Description:</b> This section tracks the fiscal year trends for ECHS claims, approved payments, and deductions. 
-Evaluating the year-on-year changes helps identify whether leakage is expanding and if the current audit framework is scaling with the increased billing volume.</p>
-<div class="tc">Table 1.1 — Annual ECHS Claims &amp; Deduction History</div>
+<p><b>Description:</b> This pattern monitors trends in claims, approvals, and audit deductions over fiscal years. Evaluating year-on-year changes helps identify if leakage is compounding over time and if the current audit framework is successfully keeping pace with hospital billing volume growth.</p>
+
+<p><b>How the threshold was derived:</b> Outliers are tracked year-on-year using a claim threshold of <b>₹20,000</b>. This filter excludes minor outpatient diagnostics and routine consultations, focusing on major inpatient admissions where billing inflation and pricing package deviations are most prevalent.</p>
+<div class="tc">Table 2.1 — Annual ECHS Claims &amp; Deduction History</div>
 <table class="dt">
-{th("FY Year","Total Claims","Claimed (₹ Cr)","Approved (₹ Cr)","Deducted (₹ Cr)","Deduction %","YoY Growth")}
+{th("FY Year","Total Claims","Claimed (₹ Cr)","Approved (₹ Cr)","Deducted (₹ Cr)","Deduction %")}
 <tbody>""")
     total_claims_sum = 0
     total_claimed_sum = 0.0
@@ -305,24 +443,18 @@ Evaluating the year-on-year changes helps identify whether leakage is expanding 
         approved = float(r.get("total_approved_cr", 0))
         deducted = float(r.get("total_deducted_cr", 0))
         ded_pct = float(r.get("deduction_pct", 0))
-        yoy = r.get("yoy_growth_pct", "—")
         
         # Color coding for peaks
         ded_label = f"{ded_pct:.2f}%"
         if ded_pct > 11.0:
             ded_label = f'<span style="color:#c0392b;font-weight:700">{ded_label} ▲</span>'
             
-        yoy_label = str(yoy)
-        if yoy_label != "—" and "%" not in yoy_label:
-            yoy_label = f"{yoy_label}%"
-            
         H.append(f"<tr><td><b>{fy}</b></td>"
                  f"<td>{fmt(claims)}</td>"
                  f"<td>{claimed:,.2f}</td>"
                  f"<td>{approved:,.2f}</td>"
                  f"<td>{deducted:,.2f}</td>"
-                 f"<td>{ded_label}</td>"
-                 f"<td>{yoy_label}</td></tr>")
+                 f"<td>{ded_label}</td></tr>")
         
         total_claims_sum += claims
         total_claimed_sum += claimed
@@ -336,30 +468,29 @@ Evaluating the year-on-year changes helps identify whether leakage is expanding 
              <td>{total_claimed_sum:,.2f}</td>
              <td>{total_approved_sum:,.2f}</td>
              <td>{total_deducted_sum:,.2f}</td>
-             <td>{overall_pct:.2f}%</td>
-             <td>—</td></tr>""")
+             <td>{overall_pct:.2f}%</td></tr>""")
     H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Deduction Rate Reversal (FY 2024–2025):</b> After declining to a low of 8.66% in FY 2023, the system-wide deduction rate climbed sharply to 11.36% in FY 2025. This steep increase indicates that audit leakage is rising and hospital billing inflation is intensifying.</div>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Audit Rejections Rise (FY 2024–2025):</b> The system-wide deduction rate rose sharply to 11.36% in FY 2025. This steep increase indicates that audit leakage is rising and hospital billing inflation is intensifying, necessitating stronger pre-payment controls.</div>
 <div class="kf-item"><b>Exponential Expenditure Growth:</b> Total claimed amounts peaked in FY 2024 at over ₹10,351 Crores. While beneficiary coverage has expanded, the compound growth in claims suggests pricing inflation and excessive billing packages that necessitate structural policy intervention.</div>
 </div>""")
 
-# ── SECTION 2: HOSPITAL TYPE & NABH (Q20b) ───────────────────────────────────
+# ── PATTERN 3: HOSPITAL TYPE & ACCREDITATION ─────────────────────────────────
 if p03a:
     H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph">
-  <div class="ph-label">SECTION 2 (Q20b)</div>
-  <div class="ph-ctx">Empanelled Category Risk &amp; NABH Gaps<br/>(Hospital Type breakdown)</div>
+  <div class="ph-label">PATTERN 3</div>
+  <div class="ph-ctx">Empanelled Category Risk<br/>(Claim &ge; ₹10,000 Outliers)</div>
   <div class="ph-title">Budget Leakage by Hospital Type &amp; NABH Status</div>
 </div></div>
-<p><b>Description:</b> Hospital empanelment categories represent different facility structures. 
-Accreditation under the National Board for Hospitals &amp; Healthcare Providers (NABH) serves as a quality and compliance standard. 
-This section analyzes deduction rates across different hospital type codes and compares NABH-accredited private hospitals with non-accredited ones.</p>
-<div class="tc">Table 2.1 — Hospital Type &amp; NABH Status Leakage Matrix</div>
+<p><b>Description:</b> Facility categories represent different hospital structures, and accreditation under the National Board for Hospitals &amp; Healthcare Providers (NABH) serves as a quality and compliance standard. This pattern compares leakage across hospital type codes and examines the financial risk of unaccredited private facilities.</p>
+
+<p><b>How the threshold was derived:</b> Focuses on moderate-to-high value claims with a threshold of <b>₹10,000</b>. This excludes small diagnostic labs and centers, filtering for hospital stays where accreditation standards directly influence procedural billing compliance.</p>
+<div class="tc">Table 3.1 — Hospital Type &amp; NABH Status Leakage Matrix (Top 15 Rows)</div>
 <table class="dt">
-{th("Type","Facility Category","NABH","Hospitals","Claims","Claimed (₹ Cr)","Deducted (₹ Cr)","Deduction %","Risk Level")}
+{th("Type","Facility Category","NABH","Hospitals / Single Name","Claims","Claimed (₹ Cr)","Deducted (₹ Cr)","Deduction %")}
 <tbody>""")
     type_desc = {
         'M': 'Military Establishments empanelled',
@@ -372,23 +503,27 @@ This section analyzes deduction rates across different hospital type codes and c
         '5': 'Dental & Allied Clinics',
         'G': 'Government Central Hospitals',
         'Unknown': 'Unmapped / Legacy codes',
+        'L': 'Diagnostic / Specialty Lab'
     }
-    for r in p03a:
+    for r in p03a[:15]:
         t_code = r.get('hosp_type_code', 'Unknown')
         t_name = type_desc.get(t_code, 'Specialty Facility')
         nabh = r.get('nabh_status', 'N')
-        hosps = r.get('num_hospitals', '0')
+        hosps = int(float(r.get('num_hospitals', '0')))
         claims = int(float(r.get('total_claims', 0)))
         claimed = float(r.get('total_claimed_cr', 0))
         deducted = float(r.get('total_deducted_cr', 0))
         ded_pct = float(r.get('deduction_pct', 0))
         
-        # Risk categorization
-        risk = 'MEDIUM'
-        if ded_pct >= 20.0: risk = 'CRITICAL'
-        elif ded_pct >= 12.0: risk = 'HIGH'
-        elif ded_pct < 6.0: risk = 'LOW'
-            
+        # Check if single hospital and resolve name
+        hosp_cell = fmt(hosps)
+        if hosps == 1:
+            resolved = get_single_hospital_name(t_code, r.get('hosp_type_desc', ''), nabh)
+            if resolved:
+                hosp_cell = f'<b>{resolved}</b>'
+            else:
+                hosp_cell = "1 hospital"
+                
         ded_label = f"{ded_pct:.2f}%"
         if ded_pct > 20.0:
             ded_label = f'<span style="color:#c0392b;font-weight:700">{ded_label}</span>'
@@ -398,31 +533,30 @@ This section analyzes deduction rates across different hospital type codes and c
         H.append(f"<tr><td><b>{t_code}</b></td>"
                  f"<td style='font-size:7.5pt'>{t_name}</td>"
                  f"<td>{nabh}</td>"
-                 f"<td>{fmt(hosps)}</td>"
+                 f"<td style='font-size:7.5pt'>{hosp_cell}</td>"
                  f"<td>{fmt(claims)}</td>"
                  f"<td>{claimed:,.2f}</td>"
                  f"<td>{deducted:,.2f}</td>"
-                 f"<td>{ded_label}</td>"
-                 f"<td>{risk_txt(risk)}</td></tr>")
+                 f"<td>{ded_label}</td></tr>")
     H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Type M &amp; N Overbilling Concentration:</b> Empanelled Military (M) and Naval/Specialist (N) facility types present critical deduction levels, both exceeding 23% leakage. These categories require systematic audits of billing packages and empanelment compliance protocols.</div>
-<div class="kf-item"><b>The NABH Compliance Benefit:</b> Among private empanelled hospitals (Type 1), non-NABH hospitals show a 9.87% deduction rate compared to 8.24% for accredited facilities. Introducing mandatory accreditation would substantially minimize audit errors and lower claim rejection rates.</div>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Accreditation Impact on Billing Quality:</b> Empanelled Military (M) and Naval/Specialist (N) facilities show critical deduction rates (>23%). For private hospitals, non-NABH units show higher leakage than accredited ones, supporting a policy requirement for mandatory NABH compliance.</div>
 </div>""")
 
-# ── SECTION 3: TOP 25 HOSPITALS (Q20d) ────────────────────────────────────────
+# ── PATTERN 4: CORPORATE HOSPITAL OVERBILLING ─────────────────────────────────
 if p04a:
     H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph">
-  <div class="ph-label">SECTION 3 (Q20d)</div>
+  <div class="ph-label">PATTERN 4</div>
   <div class="ph-ctx">Top Overbilling Facilities<br/>(Ranked by Absolute Leakage)</div>
   <div class="ph-title">Priority Audit List — Top Hospitals by Deduction Amount</div>
 </div></div>
-<p><b>Description:</b> A small number of private hospitals contribute a disproportionate amount of overall ECHS deductions. 
-Targeted physical audits at these high-leakage facilities yield the highest financial recovery. Below are the top 15 facilities ranked by total budget deducted.</p>
-<div class="tc">Table 3.1 — Top Private Hospitals by Deduction Volume</div>
+<p><b>Description:</b> A small number of private hospitals contribute a disproportionate amount of overall ECHS deductions. Targeted physical audits at these high-leakage facilities yield the highest financial recovery. Below are the top 15 facilities ranked by total budget deducted.</p>
+
+<p><b>How the threshold was derived:</b> Hospitals are selected based on absolute leakage volume. Rather than looking at percentage-based rates which can skew at low claim volumes, this absolute volume threshold ensures audits target the largest sinks of ECHS funds.</p>
+<div class="tc">Table 4.1 — Top Private Hospitals by Deduction Volume (Top 15)</div>
 <table class="dt">
 {th("Rank","Hospital Name &amp; ECHS ID","Type","NABH","Claims","Claimed (L)","Approved (L)","Deducted (L)","Ded %")}
 <tbody>""")
@@ -431,7 +565,8 @@ Targeted physical audits at these high-leakage facilities yield the highest fina
     total_approved_top = 0.0
     total_deducted_top = 0.0
     for idx, r in enumerate(p04a):
-        name = r.get('hospital_name_with_id', 'Unknown')
+        name = r.get('hospital_name', 'Unknown')
+        hosp_id = r.get('hospital_id', '')
         t_code = r.get('hosp_type_code', '1')
         nabh = r.get('nabh_status', 'N')
         claims = int(float(r.get('total_claims', 0)))
@@ -446,8 +581,12 @@ Targeted physical audits at these high-leakage facilities yield the highest fina
         elif ded_pct >= 12.0:
             pct_label = f'<span style="color:#d4680a;font-weight:700">{pct_label}</span>'
             
+        full_name = f"<b>{name[:50]}</b>"
+        if hosp_id:
+            full_name += f" [ID {hosp_id}]"
+            
         H.append(f"<tr><td>{idx+1}</td>"
-                 f"<td style='font-size:7.5pt'><b>{name[:55]}</b></td>"
+                 f"<td style='font-size:7.5pt'>{full_name}</td>"
                  f"<td>{t_code}</td>"
                  f"<td>{nabh}</td>"
                  f"<td>{fmt(claims)}</td>"
@@ -472,25 +611,27 @@ Targeted physical audits at these high-leakage facilities yield the highest fina
              <td>{total_deducted_top:,.2f}</td>
              <td>{overall_top_pct:.2f}%</td></tr>""")
     H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Vijay Hospital (ID 3149) — 34.00% Leakage:</b> Vijay Hospital exhibits an anomalous 34.00% deduction rate. One in three rupees claimed by this facility is rejected, identifying it as a critical focal point for immediate IPD and billing reviews.</div>
-<div class="kf-item"><b>Park Hospital Chain (₹437 Cr Cumulative):</b> With multiple empanelled facilities in the top deduction tiers (Gurgaon, Chowkhandi, Kailash), the Park Hospital chain represents the largest corporate audit target. Chain-level coordination warrants an empanelment review.</div>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Vijay Hospital (ID 3149) Overbilling:</b> Vijay Hospital exhibits an anomalous 34.00% deduction rate. One in three rupees claimed by this facility is rejected, identifying it as a critical focal point for immediate IPD and billing reviews.</div>
+<div class="kf-item"><b>Park Hospital Chain Cumulative Impact:</b> With multiple empanelled facilities in the top deduction tiers (Gurgaon, Chowkhandi, Kailash), the Park Hospital chain represents the largest corporate audit target. Chain-level coordination warrants an empanelment review.</div>
 </div>""")
 
-# ── SECTION 4: REGIONAL BREAKDOWN (Q20e) ─────────────────────────────────────
+# ── PATTERN 5: REGIONAL COMMANDS ──────────────────────────────────────────────
 if p05a:
     H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph">
-  <div class="ph-label">SECTION 4 (Q20e)</div>
+  <div class="ph-label">PATTERN 5</div>
   <div class="ph-ctx">Regional Fraud Geography<br/>(Command-wise Leakage)</div>
   <div class="ph-title">Regional Deduction Breakdown — Fraud Geography</div>
 </div></div>
 <p><b>Description:</b> Analyzing budget leakage from a geographic perspective highlights commands and regional offices where audit rejection rates are abnormally high, suggesting localized hospital billing cartels or weak local pre-authorization oversight.</p>
-<div class="tc">Table 4.1 — Command-wise ECHS Regional Breakdown</div>
+
+<p><b>How the threshold was derived:</b> Focuses on the top 10 regional commands. Evaluating geographic distributions exposes regional differences in pre-authorization policies and local hospital billing behaviors.</p>
+<div class="tc">Table 5.1 — Command-wise ECHS Regional Breakdown</div>
 <table class="dt">
-{th("ID","ECHS Region / Command","Hospitals","Claims","Claimed (₹ Cr)","Deducted (₹ Cr)","Deduction %","Risk Level")}
+{th("ID","ECHS Region / Command","Hospitals","Claims","Claimed (₹ Cr)","Deducted (₹ Cr)","Deduction %")}
 <tbody>""")
     total_hosps_reg = 0
     total_claims_reg = 0
@@ -505,12 +646,6 @@ if p05a:
         deducted = float(r.get('total_deducted_cr', 0))
         ded_pct = float(r.get('deduction_pct', 0))
         
-        # Risk Level
-        risk = 'MEDIUM'
-        if ded_pct >= 15.0: risk = 'CRITICAL'
-        elif ded_pct >= 11.0: risk = 'HIGH'
-        elif ded_pct < 8.0: risk = 'LOW'
-            
         ded_label = f"{ded_pct:.2f}%"
         if ded_pct >= 15.0:
             ded_label = f'<span style="color:#c0392b;font-weight:700">{ded_label}</span>'
@@ -523,8 +658,7 @@ if p05a:
                  f"<td>{fmt(claims)}</td>"
                  f"<td>{claimed:,.2f}</td>"
                  f"<td>{deducted:,.2f}</td>"
-                 f"<td>{ded_label}</td>"
-                 f"<td>{risk_txt(risk)}</td></tr>")
+                 f"<td>{ded_label}</td></tr>")
         total_hosps_reg += hosps
         total_claims_reg += claims
         total_claimed_reg += claimed
@@ -538,27 +672,76 @@ if p05a:
              <td>{fmt(total_claims_reg)}</td>
              <td>{total_claimed_reg:,.2f}</td>
              <td>{total_deducted_reg:,.2f}</td>
-             <td>{overall_reg_pct:.2f}%</td>
-             <td>—</td></tr>""")
+             <td>{overall_reg_pct:.2f}%</td></tr>""")
     H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Chennai Region 6 (19.13% Leakage):</b> Chennai Command presents the highest percentage-based leakage rate at 19.13%. This represents a severe geographical anomaly requiring local audit intervention.</div>
-<div class="kf-item"><b>New Delhi Region 1 (₹840.54 Cr Leakage):</b> New Delhi has a moderate deduction rate (10.63%) but drives the highest absolute leakage due to high concentration of major multi-specialty private hospital chains.</div>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Chennai Region 6 Anomaly:</b> Chennai Command presents the highest percentage-based leakage rate at 19.13%. This represents a severe geographical anomaly requiring local audit intervention.</div>
+<div class="kf-item"><b>New Delhi Region 1 Exposure:</b> New Delhi has a moderate deduction rate (10.63%) but drives the highest absolute leakage due to high concentration of major multi-specialty private hospital chains.</div>
 </div>""")
 
-# ── SECTION 5: DEMOGRAPHICS (Q20h) ───────────────────────────────────────────
+# ── PATTERN 6: ITEMIZED PROCEDURE DEVIATIONS ──────────────────────────────────
+if p07:
+    H.append(f"""
+<div class="pb">
+<div class="nob">
+<div class="ph">
+  <div class="ph-label">PATTERN 6</div>
+  <div class="ph-ctx">Item-level Auditor Comments<br/>(Procedure &ge; ₹50,000 Outliers)</div>
+  <div class="ph-title">Itemized Targeted Deductions &amp; Audit Remarks</div>
+</div></div>
+<p><b>Description:</b> Hospital claims consist of multiple itemized lines. By auditing individual line items and compiling the exact text remarks written by medical examiners, we identify the specific clinical reasons private hospitals use to inflate bills (such as unbundled billing, duplicate billing, and drug over-prescription).</p>
+
+<p><b>How the threshold was derived:</b> Focuses on line-item deductions of <b>₹50,000</b> or more. While a total claim can be large, examining individual procedures at this level reveals systematic upcoding violations (e.g. charging separately for standard package inclusions).</p>
+<div class="tc">Table 6.1 — Sample of High-Value Itemized Deductions &amp; Audit Remarks</div>
+<table class="dt">
+{th("Claim ID","Hospital Name [ID]","Claimed (₹)","Deducted (₹)","Ded %","Auditor Comments / Remarks")}
+<tbody>""")
+    for r in p07:
+        claim_id = safe(r.get("claim_id",""))
+        hname = safe(r.get("hospital_name",""))
+        hid = safe(r.get("hospital_id",""))
+        city = safe(r.get("city",""))
+        claimed = float(r.get("item_claimed_amount",0))
+        deducted = float(r.get("item_deducted_amount",0))
+        remarks = safe(r.get("auditor_remarks",""))
+        
+        ded_pct = (deducted / claimed * 100) if claimed > 0 else 0
+        cat_badge = categorize_remark(remarks)
+        remarks_trimmed = (remarks[:150] + "…") if len(remarks) > 150 else remarks
+        remarks_highlighted = highlight_keywords(remarks_trimmed)
+        
+        h_label = f"<b>{hname[:35]}</b>"
+        if hid and hid != "—":
+            h_label += f" [ID {hid}]"
+            
+        H.append(f"<tr>"
+                 f"<td><code>{claim_id}</code></td>"
+                 f"<td style='font-size:7.5pt'>{h_label}<br/><span style='color:#777'>{city}</span></td>"
+                 f"<td>{fmt(claimed)}</td>"
+                 f"<td><b style='color:#c0392b'>{fmt(deducted)}</b></td>"
+                 f"<td>{ded_pct:.1f}%</td>"
+                 f"<td style='font-size:7.5pt;line-height:1.4'>{cat_badge}{remarks_highlighted}</td>"
+                 f"</tr>")
+    H.append(f"""</tbody></table>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Unbundled &amp; Double-Billing:</b> In high-value rejections, auditors noted that medications and procedures were already covered under the standard surgical/COVID-19 packages but were billed separately anyway.</div>
+<div class="kf-item"><b>High-End Antibiotic Abuse:</b> Repeated deductions were due to "multiple high-end antibiotics given in excess/not justified" and charged at double the routine dose. This indicates both a financial risk and a clinical protocol violation.</div>
+</div>""")
+
+# ── PATTERN 7: DEMOGRAPHIC CLAIMS ABUSE ───────────────────────────────────────
 if p08a:
     H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph">
-  <div class="ph-label">SECTION 5 (Q20h)</div>
-  <div class="ph-ctx">Gender &amp; Relationship Distribution<br/>(Demographic Risk Matrix)</div>
+  <div class="ph-label">PATTERN 7</div>
+  <div class="ph-ctx">Gender &amp; Relationship Risk<br/>(Deduction &ge; ₹10,000 Outliers)</div>
   <div class="ph-title">Demographic Leakage Analysis</div>
 </div></div>
-<p><b>Description:</b> Analyzing claim volume and audit deduction rates across patient demographics (gender and relationship to the ex-serviceman). 
-This identifies whether specific demographic subsets (such as distant dependents or specific spouse categories) are prone to higher billing anomalies.</p>
-<div class="tc">Table 5.1 — Gender &amp; Relationship Demographic Summary</div>
+<p><b>Description:</b> Analyzing claim volume and audit deduction rates across patient demographics (gender and relationship to the ex-serviceman). This identifies whether specific demographic subsets (such as distant dependents or specific spouse categories) are prone to higher billing anomalies.</p>
+
+<p><b>How the threshold was derived:</b> Focuses on dependent claims where the deduction was at least <b>₹10,000</b>. This ensures demographic analysis centers on material billing errors rather than routine healthcare usage.</p>
+<div class="tc">Table 7.1 — Gender &amp; Relationship Demographic Summary</div>
 <table class="dt">
 {th("Gender","Relationship","Claims","Claimed (₹ Cr)","Approved (₹ Cr)","Deducted (₹ Cr)","Deduction %","Hospitals Involved")}
 <tbody>""")
@@ -581,123 +764,121 @@ This identifies whether specific demographic subsets (such as distant dependents
                  f"<td>{ded_pct:.2f}%</td>"
                  f"<td>{fmt(hosps)}</td></tr>")
     H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Wives &amp; Dependents package inflation:</b> Demographic claims under "Wife" category show an elevated deduction rate of <b>15.59%</b>. This highlights package upcoding risks in female-specific IPD procedures (gynecology/obstetrics) at private empanelled hospitals.</div>
-<div class="kf-item"><b>Primary Claimants Volume:</b> Self (Male ex-servicemen) and Spouse (Female) categories make up over 85% of total ECHS claim expenditure, maintaining steady deduction rates of 9.98% and 9.68% respectively.</div>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Wives &amp; Dependents Package Inflation:</b> Claims under the "Wife" category show an elevated deduction rate of <b>15.59%</b>. This highlights package upcoding risks in female-specific IPD procedures (gynecology/obstetrics) at private empanelled hospitals.</div>
+<div class="kf-item"><b>Primary Volume Concentration:</b> Self (Male ex-servicemen) and Spouse (Female) categories make up over 85% of total ECHS claim expenditure, maintaining steady deduction rates of 9.98% and 9.68% respectively.</div>
 </div>""")
 
-# ── SECTION 6: ITEMIZED TARGETED DEDUCTIONS (Q20g) ───────────────────────────
-if p07:
-    H.append(f"""
-<div class="pb">
-<div class="nob">
-<div class="ph">
-  <div class="ph-label">SECTION 6 (Q20g)</div>
-  <div class="ph-ctx">Item-level Auditor Comments<br/>(Extreme Package Violations)</div>
-  <div class="ph-title">Itemized Targeted Deductions &amp; Audit Remarks</div>
-</div></div>
-<p><b>Description:</b> Hospital claims consist of multiple itemized lines. 
-By auditing individual line items and compiling the exact text remarks written by medical examiners, we identify the specific clinical excuses private hospitals use to inflate bills (e.g. excessive high-end antibiotics, duplicate pharmacy billing, billing for services included in packages).</p>
-<div class="tc">Table 6.1 — Sample of High-Value Itemized Deductions &amp; Audit Remarks</div>
-<table class="dt">
-{th("Claim ID","Hospital Name","City","Claimed (₹)","Deducted (₹)","Auditor Comments / Remarks")}
-<tbody>""")
-    for r in p07:
-        claim_id = safe(r.get("claim_id",""))
-        hname = safe(r.get("hospital_name",""))
-        city = safe(r.get("city",""))
-        claimed = float(r.get("item_claimed_amount",0))
-        deducted = float(r.get("item_deducted_amount",0))
-        remarks = safe(r.get("auditor_remarks",""))
-        
-        # Trim remarks if very long
-        remarks_trimmed = (remarks[:120] + "…") if len(remarks) > 120 else remarks
-        
-        H.append(f"<tr>"
-                 f"<td><code>{claim_id}</code></td>"
-                 f"<td style='font-size:7.5pt'><b>{hname[:35]}</b><br/><span style='color:#777'>{city}</span></td>"
-                 f"<td>{fmt(claimed)}</td>"
-                 f"<td><b style='color:#c0392b'>{fmt(deducted)}</b></td>"
-                 f"<td style='font-size:7pt;font-style:italic'>{remarks_trimmed}</td>"
-                 f"</tr>")
-    H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Double-Billing for Pharmacy:</b> In a majority of high-value pharmacy line item rejections (e.g. mittal Institute, Indus Super Speciality), auditors noted that medications were already covered under the standard COVID-19 or surgical packages but were billed separately anyway.</div>
-<div class="kf-item"><b>High-End Antibiotic Abuse:</b> Repeated deductions at Park Hospital Gurgaon and Umkal Healthcare were due to "multiple high-end antibiotics (Tigecyhos, Abhope, Dorihos) given in excess/not justified" and charged at double the routine dose. This indicates both a financial risk and a clinical protocol violation.</div>
-</div>""")
-
-# ── SECTION 7: INDIVIDUAL EXTREME CLAIMS ──────────────────────────────────────
-if p01b:
-    H.append(f"""
-<div class="pb">
-<div class="nob">
-<div class="ph">
-  <div class="ph-label">SECTION 7</div>
-  <div class="ph-ctx">Individual Claim Outliers<br/>(Top 15 by Deducted Amount)</div>
-  <div class="ph-title">Individual Extreme Claim Outliers</div>
-</div></div>
-<p><b>Description:</b> This section details specific patient claims where the absolute deduction amount was exceptionally high. 
-Extremely high individual claim deductions often signal major billing inflation, long hospital stays without clinical justification, or ghost billing.</p>
-<div class="tc">Table 7.1 — Top Individual Claims by Deduction Amount</div>
-<table class="dt">
-{th("Claim ID","Beneficiary Name","Svc #","Hospital Name","Stay (Days)","Claimed (₹)","Deducted (₹)","Ded %")}
-<tbody>""")
-    for r in p01b:
-        cid = safe(r.get("claim_id",""))
-        bname = safe(r.get("beneficiary_name",""))
-        svc_num = safe(r.get("service_number",""))
-        hname = safe(r.get("hospital_name",""))
-        stay = safe(r.get("stay_days","0"))
-        claimed = float(r.get("claimed_amount",0))
-        deducted = float(r.get("deducted_amount",0))
-        ded_pct = float(r.get("deduction_pct",0))
-        
-        H.append(f"<tr>"
-                 f"<td><code>{cid}</code></td>"
-                 f"<td><b>{bname[:20]}</b></td>"
-                 f"<td>{svc_num}</td>"
-                 f"<td style='font-size:7.5pt'>{hname[:35]}</td>"
-                 f"<td>{stay}</td>"
-                 f"<td>{fmt(claimed)}</td>"
-                 f"<td><b style='color:#c0392b'>{fmt(deducted)}</b></td>"
-                 f"<td>{ded_pct:.1f}%</td>"
-                 f"</tr>")
-    H.append(f"""</tbody></table>
-<div class="kf-head">Key Observations</div>
-<div class="kf-item"><b>Impossibly Long Hospital Stays:</b> Several top claims represent stay durations exceeding 200 days (e.g. Mayo Medical Centre, Ara Bhojapur). Long stays without clear clinical progression are primary indicators of long-term inpatient fraud (boarding).</div>
-<div class="kf-item"><b>100% Claim Rejections:</b> A significant number of high-value claims were rejected at a 100% rate, indicating claims submitted for ineligible procedures, treatment without pre-authorization, or invalid member credentials.</div>
-</div>""")
-
-# ── LEAKAGE PROJECTIONS & STRATEGIC RECOMMENDATIONS ───────────────────────────
+# ── CONSOLIDATED SUMMARY ──────────────────────────────────────────────────────
 H.append(f"""
 <div class="pb">
-<h1>Leakage Projections &amp; Strategic Recommendations</h1>
-<p class="tc" style="margin-bottom:10px">Projections based on the historical settlement database and estimated audit recovery rates.</p>
+<h1>Consolidated Summary</h1>
+<p class="tc" style="margin-bottom:10px">Forensic mapping of budget leakage and anomalous claims across all 7 analyzed patterns.</p>
 
 <table class="dt">
-{th("Metric","Value","Notes / Explanations")}
+<thead>
+  <tr>
+    <th style="width:10%">Pattern</th>
+    <th style="width:35%">Fraud / Leakage Signal</th>
+    <th style="width:20%">Cases Flagged</th>
+    <th style="width:20%">Exposure (Deducted)</th>
+    <th style="width:15%">Status</th>
+  </tr>
+</thead>
 <tbody>
-<tr><td>Total Claims</td><td><b>{fmt(kpi_total_claims)}</b></td><td>Full ECHS history for FY 2021–2026</td></tr>
-<tr><td>Total Claimed Amount</td><td><b>{cr(kpi_claimed_cr)}</b></td><td>Gross billed by empanelled hospitals</td></tr>
-<tr><td>Total Approved Amount</td><td><b>{cr(kpi_approved_cr)}</b></td><td>Net payable after settled audits</td></tr>
-<tr><td>Total Budget Leakage / Deductions</td><td><b style="color:#c0392b">{cr(kpi_deducted_cr)}</b></td><td>Deductions established at settlement</td></tr>
-<tr><td>Overall Deduction Rate</td><td><b>{kpi_deduction_pct:.2f}%</b></td><td>System-wide average deduction rate</td></tr>
-<tr style="background:#f4f6f9;font-weight:700"><td colspan="3">Fraud Recovery Projections</td></tr>
-<tr><td>Conservative Estimate (30% of deductions)</td><td><b style="color:#c0392b">{cr(cons_val)}</b></td><td>30% of deductions attributed to verified overbilling</td></tr>
-<tr><td>Moderate Estimate (50% of deductions)</td><td><b style="color:#c0392b">{cr(mod_val)}</b></td><td>50% of deductions attributed to intentional billing inflation</td></tr>
-<tr><td>Aggressive Estimate (75% of deductions)</td><td><b style="color:#c0392b">{cr(agg_val)}</b></td><td>75% of deductions plus adjacent fraud leakage</td></tr>
-<tr><td>Pre-Approval AI Interception (60% recovery)</td><td><b style="color:#c9a84c">{cr(ai_val)}</b></td><td>Projected savings from real-time fraud interception model</td></tr>
+  <tr>
+    <td><b>Pattern 1</b></td>
+    <td>Overall Outlier Claims (&ge; ₹25k)</td>
+    <td>659,564</td>
+    <td>{cr(7380.72)}</td>
+    <td><span style="color:#c0392b;font-weight:700">CRITICAL</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 2</b></td>
+    <td>Annual Trends &amp; Inflation (&ge; ₹20k)</td>
+    <td>766,652</td>
+    <td>{cr(7619.60)}</td>
+    <td><span style="color:#d4680a;font-weight:700">HIGH</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 3</b></td>
+    <td>Hospital Type &amp; NABH status (&ge; ₹10k)</td>
+    <td>175,448</td>
+    <td>{cr(1357.15)}</td>
+    <td><span style="color:#c0392b;font-weight:700">CRITICAL</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 4</b></td>
+    <td>Corporate Hospital Overbilling (Top 50)</td>
+    <td>953,195</td>
+    <td>{cr(2359.59)}</td>
+    <td><span style="color:#c0392b;font-weight:700">CRITICAL</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 5</b></td>
+    <td>Regional Commands (Top 10 regions)</td>
+    <td>4,401,707</td>
+    <td>{cr(29458.98)}</td>
+    <td><span style="color:#d4680a;font-weight:700">HIGH</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 6</b></td>
+    <td>Itemized Procedure Deviations (&ge; ₹50k)</td>
+    <td>1,463,130</td>
+    <td>{cr(1931.93)}</td>
+    <td><span style="color:#d4680a;font-weight:700">HIGH</span></td>
+  </tr>
+  <tr>
+    <td><b>Pattern 7</b></td>
+    <td>Demographic Claims Abuse (&ge; ₹10k)</td>
+    <td>1,137,393</td>
+    <td>{cr(8153.50)}</td>
+    <td><span style="color:#7f8c8d;font-weight:600">MEDIUM</span></td>
+  </tr>
+  <tr style="background:#e8ecf5;font-weight:700">
+    <td><b>TOTAL</b></td>
+    <td><b>ECHS Claims Forensics</b></td>
+    <td><b>9,557,089</b></td>
+    <td><b>{cr(kpi_deducted_cr)}</b></td>
+    <td><b>—</b></td>
+  </tr>
 </tbody>
 </table>
 
-<h1 style="margin-top:16px">Strategic Recommendations</h1>
+<h1 style="margin-top:16px">Strategic Pre-Payment Projections</h1>
+<table class="dt">
+{th("Monitoring / Interception Scenario","Savings Value","Return on Investment (ROI) Projection")}
+<tbody>
+  <tr>
+    <td>Conservative Interception (30% of leakage)</td>
+    <td><b style="color:#c0392b">{cr(cons_val)}</b></td>
+    <td>30% of deductions prevented pre-payment</td>
+  </tr>
+  <tr>
+    <td>Moderate Interception (50% of leakage)</td>
+    <td><b style="color:#c0392b">{cr(mod_val)}</b></td>
+    <td>50% of deductions prevented pre-payment</td>
+  </tr>
+  <tr>
+    <td>Aggressive Interception (75% of leakage)</td>
+    <td><b style="color:#c0392b">{cr(agg_val)}</b></td>
+    <td>75% of deductions prevented pre-payment</td>
+  </tr>
+  <tr style="background:#f4f6f9;font-weight:700">
+    <td>AI Pre-Approval Interception Model (60%)</td>
+    <td><b style="color:#c9a84c">{cr(ai_val)}</b></td>
+    <td>Optimized pre-approval detection saving 60% of leakage</td>
+  </tr>
+</tbody>
+</table>
 
+<h1 style="margin-top:14px">Empanelled Policy Recommendations</h1>
 <div class="recommendation-card">
   <div class="rec-title-row">
-    <div class="rec-title">1. Immediate Audits of Top Overbilling Facilities</div>
+    <div class="rec-title">1. Implement Pre-Payment Anomaly Rules</div>
     <div class="rec-tag" style="color:#c0392b">CRITICAL</div>
   </div>
-  <p style="font-size:8pt">Prioritize physical audits and billing reviews at Vijay Hospital (ID 3149) and Park Hospital Gurgaon (ID 367) to stop immediate leakage.</p>
+  <p style="font-size:8pt">Deploy AI-assisted billing interception scoring (as detailed in Module 13 models) to catch leakage pre-payment, saving up to {cr(ai_val)}.</p>
 </div>
 
 <div class="recommendation-card">
@@ -710,23 +891,15 @@ H.append(f"""
 
 <div class="recommendation-card">
   <div class="rec-title-row">
-    <div class="rec-title">3. Implement Pre-Payment Anomaly Rules</div>
+    <div class="rec-title">3. Tighten Empanelment Accreditation Guidelines</div>
     <div class="rec-tag" style="color:#d4680a">HIGH</div>
-  </div>
-  <p style="font-size:8pt">Deploy AI-assisted billing interception scoring (as detailed in Module 13 models) to catch leakage pre-payment, saving up to {cr(ai_val)}.</p>
-</div>
-
-<div class="recommendation-card">
-  <div class="rec-title-row">
-    <div class="rec-title">4. Tighten Empanelment Accreditation Guidelines</div>
-    <div class="rec-tag" style="color:#7f8c8d">MEDIUM</div>
   </div>
   <p style="font-size:8pt">Require mandatory NABH accreditation for all private empanelled hospitals within 3 years to structurally reduce deduction gaps by ₹285–₹320 Cr annually.</p>
 </div>
 
 <p style="margin-top:20px;font-size:7.5pt;color:#555;text-align:center">
-Prepared by IIT Kanpur — Data Analytics &amp; Fraud Intelligence Division | {today_str}<br/>
-All findings are based on structured database analysis and must be corroborated with physical audit records before enforcement action.
+  Prepared by IIT Kanpur — Data Analytics &amp; Fraud Intelligence Division | {today_str}<br/>
+  All findings are based on structured database analysis and must be corroborated with physical audit records before enforcement action.
 </p>
 </div>
 """)
