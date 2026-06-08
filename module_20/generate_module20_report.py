@@ -129,17 +129,32 @@ def tbl_style(hdr=1, font_size=8):
 # ═══════════════════════════════════════════════════════════════════════
 
 def load_csv(path):
-    """Load rows from a CSV file if it exists"""
+    """Load rows from a CSV file if it exists, with glob fallback for prefixed/timestamped files"""
+    import glob
+    resolved_path = path
+    if not os.path.exists(path):
+        folder = os.path.dirname(path)
+        base = os.path.basename(path)
+        name, ext = os.path.splitext(base)
+        # Look for files like *overall_leakage_summary*.csv or overall_leakage_summary.csv
+        patterns = [f"*{name}*{ext}", f"{name}{ext}"]
+        for pat in patterns:
+            matches = glob.glob(os.path.join(folder, pat))
+            if matches:
+                matches.sort(key=os.path.getmtime, reverse=True)
+                resolved_path = matches[0]
+                break
+
     rows = []
-    if os.path.exists(path):
+    if os.path.exists(resolved_path):
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(resolved_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for r in reader:
                     rows.append(r)
-            print(f"[INFO] Successfully loaded {len(rows)} rows from {os.path.basename(path)}.")
+            print(f"[INFO] Successfully loaded {len(rows)} rows from {os.path.basename(resolved_path)}.")
         except Exception as e:
-            print(f"[ERROR] Failed to read {path}: {str(e)}")
+            print(f"[ERROR] Failed to read {resolved_path}: {str(e)}")
     else:
         print(f"[WARNING] {os.path.basename(path)} not found. Using pre-computed fallback data.")
     return rows
@@ -322,7 +337,7 @@ def build_report():
     
     # Setup paths
     base_path = os.path.dirname(os.path.abspath(__file__))
-    data_folder = '/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20'
+    data_folder = os.path.join(base_path, 'data')
     reports_folder = os.path.join(base_path, 'reports')
     os.makedirs(reports_folder, exist_ok=True)
     
@@ -331,7 +346,7 @@ def build_report():
     # Load dynamic CSVs
     overall_csv = load_csv(os.path.join(data_folder, 'overall_leakage_summary.csv'))
     trend_csv = load_csv(os.path.join(data_folder, 'annual_expenditure_trend.csv'))
-    types_csv = load_csv(os.path.join(data_folder, 'hospital_type_nabh_leakage.csv'))
+    types_csv = load_csv(os.path.join(data_folder, 'hospital_type_nabh_summary.csv'))
     hospitals_csv = load_csv(os.path.join(data_folder, 'hospital_leakage_summary.csv'))
     regions_csv = load_csv(os.path.join(data_folder, 'regional_deduction_breakdown.csv'))
     projections_csv = load_csv(os.path.join(data_folder, 'fraud_projection_summary.csv'))
@@ -351,7 +366,7 @@ def build_report():
             total_claimed_cr = float(row['total_claimed_cr'])
             total_approved_cr = float(row['total_approved_cr'])
             total_deducted_cr = float(row['total_deducted_cr'])
-            deduction_pct = float(row['deduction_pct'])
+            deduction_pct = float(row['overall_deduction_pct'])
         except Exception as e:
             print(f"[ERROR] Parsing overall summary CSV: {str(e)}. Using fallback values.")
             

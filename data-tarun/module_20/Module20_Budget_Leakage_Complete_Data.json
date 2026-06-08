@@ -1,61 +1,61 @@
 {
-  "execution_time": "2026-06-05T18:59:12.120243",
+  "execution_time": "2026-06-06T16:54:31.728150",
   "total_queries": 8,
   "summary": {
     "01_overall_leakage_summary": {
       "status": "success",
       "records": 1,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/01_overall_leakage_summary.csv",
-      "query_time": "0:00:01.407688"
+      "query_time": "0:00:01.465305"
     },
     "02_annual_expenditure_trend": {
       "status": "success",
       "records": 5,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/02_annual_expenditure_trend.csv",
-      "query_time": "0:00:02.803690"
+      "query_time": "0:00:02.707149"
     },
     "03_hospital_type_nabh_leakage": {
       "status": "success",
       "records": 20,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/03_hospital_type_nabh_leakage.csv",
-      "query_time": "0:00:04.911822"
+      "query_time": "0:00:05.012983"
     },
     "04_hospital_leakage_summary": {
       "status": "success",
       "records": 4000,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/04_hospital_leakage_summary.csv",
-      "query_time": "0:00:19.845139"
+      "query_time": "0:00:18.776720"
     },
     "05_regional_deduction_breakdown": {
       "status": "success",
       "records": 31,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/05_regional_deduction_breakdown.csv",
-      "query_time": "0:00:05.511603"
+      "query_time": "0:00:05.879852"
     },
     "06_fraud_projection_summary": {
       "status": "success",
       "records": 1,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/06_fraud_projection_summary.csv",
-      "query_time": "0:00:01.092300"
+      "query_time": "0:00:01.127401"
     },
     "07_high_deduction_hospital_claims": {
       "status": "success",
       "records": 534,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/07_high_deduction_hospital_claims.csv",
-      "query_time": "0:00:28.450716"
+      "query_time": "0:00:23.616194"
     },
     "08_gender_relation_leakage": {
       "status": "success",
       "records": 33,
       "file": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/08_gender_relation_leakage.csv",
-      "query_time": "0:00:10.535566"
+      "query_time": "0:00:09.792826"
     }
   },
   "data": {
     "01_overall_leakage_summary": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/01_overall_leakage_summary.csv",
       "rows": 1,
-      "query_time": "0:00:01.407688",
+      "query_time": "0:00:01.465305",
       "data": [
         {
           "total_claims": "19845384",
@@ -69,7 +69,7 @@
     "02_annual_expenditure_trend": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/02_annual_expenditure_trend.csv",
       "rows": 5,
-      "query_time": "0:00:02.803690",
+      "query_time": "0:00:02.707149",
       "data": [
         {
           "fiscal_year": "2021",
@@ -116,7 +116,7 @@
     "03_hospital_type_nabh_leakage": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/03_hospital_type_nabh_leakage.csv",
       "rows": 20,
-      "query_time": "0:00:04.911822",
+      "query_time": "0:00:05.012983",
       "data": [
         {
           "hosp_type_code": "M",
@@ -323,7 +323,7 @@
     "04_hospital_leakage_summary": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/04_hospital_leakage_summary.csv",
       "rows": 4000,
-      "query_time": "0:00:19.845139",
+      "query_time": "0:00:18.776720",
       "data": [
         {
           "hospital_id": "3149",
@@ -64330,7 +64330,7 @@
     "05_regional_deduction_breakdown": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/05_regional_deduction_breakdown.csv",
       "rows": 31,
-      "query_time": "0:00:05.511603",
+      "query_time": "0:00:05.879852",
       "data": [
         {
           "region_id": "8",
@@ -64678,7 +64678,7 @@
     "06_fraud_projection_summary": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/06_fraud_projection_summary.csv",
       "rows": 1,
-      "query_time": "0:00:01.092300",
+      "query_time": "0:00:01.127401",
       "data": [
         {
           "total_claimed_cr": "36261.44",
@@ -64693,7 +64693,7 @@
     "07_high_deduction_hospital_claims": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/07_high_deduction_hospital_claims.csv",
       "rows": 534,
-      "query_time": "0:00:28.450716",
+      "query_time": "0:00:23.616194",
       "data": [
         {
           "hospital_id": "274",
@@ -79302,7 +79302,7 @@
     "08_gender_relation_leakage": {
       "filename": "/home/tarun/Downloads/CC/echs_analysis/data-tarun/module_20/08_gender_relation_leakage.csv",
       "rows": 33,
-      "query_time": "0:00:10.535566",
+      "query_time": "0:00:09.792826",
       "data": [
         {
           "gender": "M",

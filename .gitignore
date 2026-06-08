@@ -46,5 +46,7 @@ Thumbs.db
 # data files
 *.csv
 */data/
+*/new_data/
 module_11/data/
 module_12/data/
+module_20/new_data/

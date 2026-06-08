@@ -114,7 +114,7 @@ queries = {
             ROUND(SUM(ss.SS_DED_AMT) * 100.0 / SUM(ss.SS_CLAIM_AMT), 2) AS deduction_pct
         FROM settlement_stat ss
         LEFT JOIN office_master om ON ss.SS_OFFICE_ID = om.OM_OFFICE_ID
-        LEFT JOIN cghs_region_master crm ON om.OM_CGHS_CITY_ID = crm.CRM_CITY_ID
+        LEFT JOIN cghs_region_master crm ON om.OM_OFFICE_CGHS_CITY_ID = crm.CRM_CITY_ID
         LEFT JOIN state_master sm ON crm.CRM_STATE_ID = sm.SM_STATE_ID
         WHERE ss.SS_FY_YEAR BETWEEN 2021 AND 2025
         GROUP BY ss.SS_REGION_ID, crm.CRM_CITY_NAME, sm.SM_STATE_NAME
@@ -169,14 +169,7 @@ queries = {
         WHERE ci.CI_CR_DATE >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
             AND cs.CS_NET_CLAIM_AMT > 0
             AND (cs.CS_NET_CLAIM_AMT - cs.CS_UTI_APP_AMT) > 0
-            AND ci.CI_CR_OFFICE_ID IN (
-                SELECT ss.SS_OFFICE_ID
-                FROM settlement_stat ss
-                WHERE ss.SS_FY_YEAR BETWEEN 2021 AND 2025
-                GROUP BY ss.SS_OFFICE_ID
-                ORDER BY SUM(ss.SS_DED_AMT) DESC
-                LIMIT 25
-            )
+            AND ci.CI_CR_OFFICE_ID IN ({ids})
         ORDER BY deducted_amount DESC
         LIMIT 500;
     """,
@@ -186,7 +179,7 @@ queries = {
     "gender_relation_leakage": """
         SELECT 
             ss.SS_GENDER AS gender,
-            COALESCE(rm.RM_RELATION_DESC, ss.SS_RELATION_ID) AS relationship,
+            COALESCE(rm.RM_RELATION_NAME, ss.SS_RELATION_ID) AS relationship,
             SUM(ss.SS_CLAIM_CNT) AS total_claims,
             ROUND(SUM(ss.SS_CLAIM_AMT) / 10000000.0, 2) AS total_claimed_cr,
             ROUND(SUM(ss.SS_DED_AMT) / 10000000.0, 2) AS total_deducted_cr,
@@ -194,7 +187,7 @@ queries = {
         FROM settlement_stat ss
         LEFT JOIN relation_master rm ON ss.SS_RELATION_ID = rm.RM_RELATION_ID
         WHERE ss.SS_FY_YEAR BETWEEN 2021 AND 2025
-        GROUP BY ss.SS_GENDER, ss.SS_RELATION_ID, rm.RM_RELATION_DESC
+        GROUP BY ss.SS_GENDER, ss.SS_RELATION_ID, rm.RM_RELATION_NAME
         ORDER BY total_deducted_cr DESC;
     """
 }
@@ -212,6 +205,43 @@ def execute_extraction():
         print(f"[{idx}/{len(queries)}] Extracting dataset: {name}...")
         csv_path = os.path.join(OUTPUT_DIR, f"{name}.csv")
         
+        query_to_run = query.strip()
+        if name == "high_deduction_hospital_claims":
+            print("  -> Fetching top 25 hospital IDs first...")
+            id_query = """
+                SELECT ss.SS_OFFICE_ID
+                FROM settlement_stat ss
+                WHERE ss.SS_FY_YEAR BETWEEN 2021 AND 2025
+                GROUP BY ss.SS_OFFICE_ID
+                ORDER BY SUM(ss.SS_DED_AMT) DESC
+                LIMIT 25;
+            """
+            id_cmd = [
+                'mysql',
+                '-h', DB_HOST,
+                '-P', DB_PORT,
+                '-u', DB_USER,
+                f'-p{DB_PASS}',
+                DB_NAME,
+                '-B',
+                '-N',
+                '-e', id_query.strip()
+            ]
+            try:
+                id_res = subprocess.run(id_cmd, capture_output=True, text=True, check=True)
+                office_ids = [line.strip() for line in id_res.stdout.strip().split('\n') if line.strip()]
+                if office_ids:
+                    ids_str = ", ".join(f"'{oid}'" for oid in office_ids)
+                    query_to_run = query.format(ids=ids_str).strip()
+                else:
+                    print("  ✗ Failed to fetch top 25 hospital IDs (empty result).")
+                    print("-" * 80)
+                    continue
+            except Exception as e:
+                print(f"  ✗ Failed to fetch top 25 hospital IDs: {str(e)}")
+                print("-" * 80)
+                continue
+
         # Format mysql CLI call
         cmd = [
             'mysql',
@@ -221,7 +251,7 @@ def execute_extraction():
             f'-p{DB_PASS}',
             DB_NAME,
             '-B',
-            '-e', query.strip()
+            '-e', query_to_run
         ]
         
         try:
