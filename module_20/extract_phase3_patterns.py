@@ -55,7 +55,11 @@ queries = {
         JOIN claim_intimation ci ON cs.CS_INTIMATION_ID = ci.CI_INTIMATION_ID
         LEFT JOIN office_master om ON ci.CI_CR_OFFICE_ID = om.OM_OFFICE_ID
         WHERE ci.CI_CR_DATE >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-          AND cs.CS_TREAT_DOCT IS NOT NULL AND cs.CS_TREAT_DOCT != ''
+          AND cs.CS_TREAT_DOCT IS NOT NULL 
+          AND TRIM(cs.CS_TREAT_DOCT) != ''
+          AND TRIM(cs.CS_TREAT_DOCT) != '-'
+          AND UPPER(TRIM(cs.CS_TREAT_DOCT)) NOT IN ('OPD', 'LPL', 'IPD', 'DOCTOR', 'NIL', 'NA', 'NONE')
+          AND COALESCE(om.OM_HOSP_TYPE, '') NOT IN ('3', 'L')
         GROUP BY ci.CI_CR_OFFICE_ID, om.OM_OFFICE_NAME, om.OM_OFFICE_CITY, cs.CS_TREAT_DOCT, DATE(cs.CS_SUB_DATE)
         HAVING surgeries_in_one_day >= 15
         ORDER BY surgeries_in_one_day DESC
