@@ -9,7 +9,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'new_data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-csv_file = os.path.join(DATA_DIR, f"new_19_01_all_hospital_deductions_{timestamp}.csv")
+csv_file = os.path.join(DATA_DIR, f"new_19_09_pattern_9_stay_extension_{timestamp}.csv")
 
 def get_connection():
     return pymysql.connect(
@@ -21,11 +21,10 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-def extract_all_hospital_deductions():
-    """Extracts deduction stats for ALL hospitals without any limits."""
-    print("Extracting Pattern 1: High Deduction Hospitals (FULL DATA)...")
+def extract_pattern_9_stay_extension():
+    """Extracts RAW claims where stay extensions were applied (Stay Extension Farming)."""
+    print("Extracting Pattern 9: Stay Extension Farming (RAW FULL DATA)...")
     
-    # We extract RAW individual claims where the deduction is greater than 50% of the billed amount.
     query = """
     SELECT 
         c.CI_INTIMATION_ID as claim_id,
@@ -37,22 +36,28 @@ def extract_all_hospital_deductions():
         crm.CRM_CITY_NAME as cghs_region,
         ht.hos_type_description as hospital_type,
         
-        c.CI_PATIENT_TYPE as patient_type,
         c.CI_ADM_AILMENT as admission_ailment,
+        c.CI_ADMISSION_DATE as actual_admission_date,
+        c.CI_EXP_DOD as initial_expected_discharge_date,
         
-        cs.CS_GR_CLAIM_AMT as billed_amount,
-        cs.CS_UTI_APP_AMT as approved_amount,
-        (cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) as deducted_amount,
-        ((cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) / cs.CS_GR_CLAIM_AMT) * 100 as deduction_percentage
-    FROM claim_intimation c
-    INNER JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
+        se.SE_REASON as extension_reason_by_hospital,
+        se.SE_PROPOSE_DOD as new_proposed_discharge_date,
+        se.SE_APPROVED_DOD as final_approved_discharge_date,
+        
+        DATEDIFF(se.SE_PROPOSE_DOD, c.CI_EXP_DOD) as extra_days_requested,
+        DATEDIFF(se.SE_APPROVED_DOD, c.CI_EXP_DOD) as extra_days_approved,
+        
+        cs.CS_GR_CLAIM_AMT as total_billed_amount,
+        cs.CS_UTI_APP_AMT as total_approved_amount
+    FROM stay_extension se
+    INNER JOIN claim_intimation c ON se.SE_CLAIM_ID = c.CI_INTIMATION_ID
+    LEFT JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
     LEFT JOIN user_details ud ON c.CI_HOSPITAL_ID = ud.UD_USER_ID
     LEFT JOIN office_master o ON ud.UD_OFFICE_ID = o.OM_OFFICE_ID
     LEFT JOIN state_master st ON o.OM_OFFICE_STATE_ID = st.SM_STATE_ID
     LEFT JOIN hos_types ht ON o.OM_HOSP_TYPE = ht.hos_type_code
     LEFT JOIN cghs_region_master crm ON o.OM_OFFICE_CGHS_CITY_ID = crm.CRM_CITY_ID
-    WHERE cs.CS_GR_CLAIM_AMT > 0
-      AND ((cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) / cs.CS_GR_CLAIM_AMT) > 0.50
+    WHERE se.SE_PROPOSE_DOD > c.CI_EXP_DOD
     """
     
     with get_connection() as conn:
@@ -65,8 +70,8 @@ def extract_all_hospital_deductions():
             writer = csv.DictWriter(f, fieldnames=results[0].keys())
             writer.writeheader()
             writer.writerows(results)
-    
-    print(f"✅ Successfully extracted ALL {len(results)} hospital records to {os.path.basename(csv_file)}")
+            
+    print(f"✅ Successfully extracted ALL {len(results)} raw individual claims to {os.path.basename(csv_file)}")
 
 if __name__ == "__main__":
-    extract_all_hospital_deductions()
+    extract_pattern_9_stay_extension()

@@ -5,11 +5,11 @@ from datetime import datetime
 
 # Setup paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, 'new_data')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-csv_file = os.path.join(DATA_DIR, f"new_19_01_all_hospital_deductions_{timestamp}.csv")
+csv_file = os.path.join(DATA_DIR, f"new_19_04_pattern_4_y_flag_bypass_{timestamp}.csv")
 
 def get_connection():
     return pymysql.connect(
@@ -21,38 +21,43 @@ def get_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-def extract_all_hospital_deductions():
-    """Extracts deduction stats for ALL hospitals without any limits."""
-    print("Extracting Pattern 1: High Deduction Hospitals (FULL DATA)...")
+def extract_pattern_4_y_flag():
+    """Extracts RAW claims where CI_NONEMP_FLG = 'Y' (Non-Empanelled Bypass)."""
+    print("Extracting Pattern 4: Non-Empanelled Y-Flag Bypass (RAW FULL DATA)...")
     
-    # We extract RAW individual claims where the deduction is greater than 50% of the billed amount.
+    # We extract the full raw data without grouping.
     query = """
     SELECT 
         c.CI_INTIMATION_ID as claim_id,
         YEAR(c.CI_ADMISSION_DATE) as claim_year,
         c.CI_HOSPITAL_ID as hospital_id,
+        c.CI_NONEMPANELLED_HOSPITAL as non_empanelled_hospital_name,
         o.OM_OFFICE_NAME as registered_hospital_name,
         o.OM_OFFICE_CITY as hospital_city,
         st.SM_STATE_NAME as hospital_state,
         crm.CRM_CITY_NAME as cghs_region,
         ht.hos_type_description as hospital_type,
         
-        c.CI_PATIENT_TYPE as patient_type,
+        pt.PT_TYPE_DESC as patient_type,
         c.CI_ADM_AILMENT as admission_ailment,
         
-        cs.CS_GR_CLAIM_AMT as billed_amount,
+        c.CI_CARD_ROOM_TYPE as entitled_room,
+        c.CI_ROOM_TYPE_ID as billed_room,
+        c.CI_APPROX_COST as billed_amount,
         cs.CS_UTI_APP_AMT as approved_amount,
-        (cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) as deducted_amount,
-        ((cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) / cs.CS_GR_CLAIM_AMT) * 100 as deduction_percentage
+        (cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) as deducted_amount
     FROM claim_intimation c
-    INNER JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
+    LEFT JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
+    LEFT JOIN patient_type pt ON c.CI_PATIENT_TYPE = pt.PT_TYPE_ID
     LEFT JOIN user_details ud ON c.CI_HOSPITAL_ID = ud.UD_USER_ID
     LEFT JOIN office_master o ON ud.UD_OFFICE_ID = o.OM_OFFICE_ID
     LEFT JOIN state_master st ON o.OM_OFFICE_STATE_ID = st.SM_STATE_ID
-    LEFT JOIN hos_types ht ON o.OM_HOSP_TYPE = ht.hos_type_code
+    LEFT JOIN hos_types ht ON o.OM_HOSP_TYPE = ht.hos_type_id
     LEFT JOIN cghs_region_master crm ON o.OM_OFFICE_CGHS_CITY_ID = crm.CRM_CITY_ID
-    WHERE cs.CS_GR_CLAIM_AMT > 0
-      AND ((cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) / cs.CS_GR_CLAIM_AMT) > 0.50
+    WHERE c.CI_NONEMP_FLG = 'Y'
+      AND cs.CS_GR_CLAIM_AMT > 0
+      AND YEAR(c.CI_ADMISSION_DATE) BETWEEN 2021 AND 2026
+
     """
     
     with get_connection() as conn:
@@ -65,8 +70,8 @@ def extract_all_hospital_deductions():
             writer = csv.DictWriter(f, fieldnames=results[0].keys())
             writer.writeheader()
             writer.writerows(results)
-    
-    print(f"✅ Successfully extracted ALL {len(results)} hospital records to {os.path.basename(csv_file)}")
+            
+    print(f"✅ Successfully extracted ALL {len(results)} raw individual claims to {os.path.basename(csv_file)}")
 
 if __name__ == "__main__":
-    extract_all_hospital_deductions()
+    extract_pattern_4_y_flag()

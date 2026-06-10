@@ -18,7 +18,7 @@ DATA_DIR    = os.path.join(BASE, "new_data")
 # Fallback to old data folder if new_data is missing
 if not os.path.exists(DATA_DIR):
     DATA_DIR = os.path.join(BASE, "data")
-REPORTS_DIR = os.path.join(BASE, "reports")
+REPORTS_DIR = os.path.join(BASE, "final_report")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 today_str = date.today().strftime("%-d %B %Y")
@@ -394,7 +394,7 @@ if p04a:
 <p><b>How the threshold was derived:</b> Hospitals are selected based on absolute leakage volume. Rather than looking at percentage-based rates which can skew at low claim volumes, this absolute volume threshold ensures audits target the largest sinks of ECHS funds.</p>
 <div class="tc">Table 1.1 — Top Private Hospitals by Deduction Volume (Top 15)</div>
 <table class="dt">
-{th("Rank","Hospital Name &amp; ECHS ID","Type","NABH","Claims","Claimed (L)","Approved (L)","Deducted (L)","Ded %")}
+{th("Rank","Hospital Name &amp; ECHS ID","Type","NABH","Claims","Claimed (₹ Cr)","Approved (₹ Cr)","Deducted (₹ Cr)","Ded %")}
 <tbody>""")
     total_claims_top = 0
     total_claimed_top = 0.0
@@ -426,9 +426,9 @@ if p04a:
                  f"<td>{t_code}</td>"
                  f"<td>{nabh}</td>"
                  f"<td>{fmt(claims)}</td>"
-                 f"<td>{claimed:,.2f}</td>"
-                 f"<td>{approved:,.2f}</td>"
-                 f"<td><b>{deducted:,.2f}</b></td>"
+                 f"<td>{claimed/100:,.2f}</td>"
+                 f"<td>{approved/100:,.2f}</td>"
+                 f"<td><b>{deducted/100:,.2f}</b></td>"
                  f"<td>{pct_label}</td></tr>")
         total_claims_top += claims
         total_claimed_top += claimed
@@ -442,9 +442,9 @@ if p04a:
              <td>—</td>
              <td>—</td>
              <td>{fmt(total_claims_top)}</td>
-             <td>{total_claimed_top:,.2f}</td>
-             <td>{total_approved_top:,.2f}</td>
-             <td>{total_deducted_top:,.2f}</td>
+             <td>{total_claimed_top/100:,.2f}</td>
+             <td>{total_approved_top/100:,.2f}</td>
+             <td>{total_deducted_top/100:,.2f}</td>
              <td>{overall_top_pct:.2f}%</td></tr>""")
     H.append(f"""</tbody></table>
 <div class="kf-head">Key Findings</div>
