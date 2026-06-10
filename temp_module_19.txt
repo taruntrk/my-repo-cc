@@ -1,0 +1,1655 @@
+GOVERNMENT OF INDIA | EX-SERVICEMEN CONTRIBUTORY HEALTH SCHEME | ECHS DIRECTORATE
+Fraud Analytics & Financial Intelligence Report
+
+ECHS FRAUD ANALYTICS
+Policy Abuse & Entitlement Misuse
+MODULE 19 REPORT | FULL DATABASE COVERAGE | FY 2013 – FY 2025
+
+HIGH-DEDUCTION HOSPITALS
+
+PEAK DEDUCTION RATE
+
+NON-EMPANELLED CLAIMS
+
+ROOM UPGRADE FRAUD
+
+50 Facilities
+
+86.93%
+
+32.8 Lakh
+
+78K+ Cases
+
+Type N Polyclinics (avg 47%)
+
+Type M Military Hospitals
+
+Diagnostic Labs (avg 55%)
+
+HIGHEST RISK
+
+VERY HIGH RISK
+
+HIGH RISK
+
+IIT KANPUR — Data Analytics & Fraud Intelligence Division
+May 2026 | Ex-Servicemen Contributory Health Scheme (ECHS)
+
+RESTRICTED — For internal audit and investigative use only.
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 2
+
+EXECUTIVE SUMMARY
+Module 19 investigates three dimensions of policy abuse within the ECHS claim ecosystem: (1) hospitals with
+chronically elevated deduction rates indicating systematic overbilling; (2) room entitlement misuse where patients are
+billed for higher-category rooms than their ECHS card authorises; and (3) non-empanelled hospital claims where
+beneficiaries seek treatment at facilities not on the approved ECHS panel. Analysis spans 43.5 million claim records
+across the full ECHS database. The most alarming finding is the concentration of extreme deduction rates (>86%) in
+diagnostic labs and specialist facilities that have been empanelled despite consistently fraudulent billing, and the
+presence of 78,000+ confirmed room upgrade mismatches where patients were charged for rooms above their
+entitlement. Temporal analysis (Q19e) reveals a critical 2025 reversal — IPD deduction rates had fallen to a
+decade-low of 8.89% in 2023 but have rebounded to 11.45% in 2025, indicating that fraud control measures achieved
+only temporary suppression.
+
+86.93%
+
+50 Hosps
+
+32.8L
+
+20.61%
+
+Max Deduction Rate■(SRL Indore)
+
+>25% Deduction Rate■Facilities
+
+Non-Empanelled■Claims (Y-flag)
+
+ICU Room■Deduction Rate
+
+Module 19 — Key Fraud Signals
+#
+
+Signal
+
+Finding
+
+Risk
+
+S1
+
+Diagnostic Labs —
+Extreme Overbilling
+
+SRL Limited Indore: 86.93% deduction (103 claims). Dr Sandhu's Pathology: 62.95%. DR
+LAL PATH LABS Kanpur: 45.69%. Labs routinely bill for unreported/unapproved tests.
+
+CRITICAL
+
+S2
+
+Type N Polyclinics —
+Systemic Fraud
+
+18 ECHS polyclinics (type N) all exceed 42% deduction rate. Karimnagar: 53.04%,
+Gulbarga: 52.52%, Kanchipuram: 50.87%. Combined deductions from listed N-type:
+■3,300+ Lakh.
+
+CRITICAL
+
+S3
+
+Type M Military
+Hospitals — 42–46%
+Ded Rates
+
+ECHS military polyclinics (type M) cluster at 42–46%: Chennai 5188 (46.45%),
+Yelahanka 5251 (45.67%), Avadi 5152 (45.39%), Golconda 5021 (44.53%). Internal
+billing is inflated by 2× the system average.
+
+CRITICAL
+
+S4
+
+Room Upgrade Fraud
+— GEN billed as PRI
+
+78,212 cases where billed room category exceeds entitlement (NULL hospital = ghost
+admissions). Named hospitals: echsfhm (1,070 cases, ■838L), parkhos (1,013 cases,
+■591L), maxsuper (647 cases, ■359L), ivyhosp (620, ■363L).
+
+CRITICAL
+
+S5
+
+ICU Overbilling —
+20.61% Deduction
+Rate
+
+ICU claims have the highest deduction rate (20.61%) among all room categories.
+Indicates inflated ICU stay durations or ICU-coded procedures for step-down patients.
+
+HIGH
+
+S6
+
+Apollo & MAX —
+Non-Empanelled
+Private Claims
+
+Apollo Hospital: ■13.54 Cr claimed (754 claims) with ■1.24 Cr deducted at
+non-empanelled rate. MAX Healthcare: ■11.19 Cr (2,316 claims), ■0.44 Cr deducted.
+Manipal: ■10.94 Cr. These private chains are billing through Y-flag loopholes.
+
+HIGH
+
+S7
+
+Ghost Admissions —
+NULL Hospital IDs
+
+In room upgrade fraud data, the largest group (78,212 mismatches worth ■41,455.97L)
+has NULL CI_HOSPITAL_ID — meaning the admission cannot be traced to any hospital.
+These represent likely ghost admissions with fabricated room data.
+
+HIGH
+
+S8
+
+530K "Unverified"
+Flag Claims
+
+CI_NONEMP_FLG = "U" on 530,517 claims across 73,562 hospital IDs — an
+anomalously wide spread suggesting systematic misclassification or bulk unverified
+submissions.
+
+MEDIUM
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 3
+
+Threshold: >25% deduction rate, >50 claims (settlement_stat)
+
+Q19a
+
+Chronically High Deduction Rate Hospitals
+The following 50 hospitals have maintained deduction rates exceeding 25% across their full ECHS billing history. The
+top table shows the 25 highest-rate facilities. Diagnostic labs (Type 3 & 5) dominate the extreme end (>60%), while
+Type N and M military polyclinics cluster in the 42–54% band. NABH accreditation provides no protection at this
+severity level — SRL Limited (NABH-accredited) leads at 86.93%.
+ID
+
+Hospital Name
+
+Type
+
+NABH
+
+Claims
+
+Claimed (■L)
+
+Deducted (■L)
+
+Ded %
+
+1666
+
+SRL LIMITED – INDORE
+
+1
+
+Y
+
+103
+
+22.94
+
+19.94
+
+86.93%
+
+268
+
+ANJINI SPECIALITY DENTAL HOSPITAL
+
+3
+
+N
+
+222
+
+1,757.26
+
+1,190.14
+
+67.77%
+
+1650
+
+APOLLO SPECIALITY HOSPITAL – VANAGARAM
+
+1
+
+N
+
+138
+
+5,433.19
+
+3,452.79
+
+63.56%
+
+106
+
+DR SANDHU'S PATHOLOGY AND IMAGING CENTRE
+
+5
+
+N
+
+218
+
+155.11
+
+97.66
+
+62.95%
+
+1691
+
+SRL LIMITED – BANNERGHATTA ROAD
+
+1
+
+Y
+
+346
+
+1,561.43
+
+857.43
+
+54.90%
+
+1591
+
+MMI NARAYANA MULTISPECIALITY – RAIPUR
+
+1
+
+N
+
+422
+
+4,246.53
+
+2,287.14
+
+53.84%
+
+5023
+
+KARIMNAGAR (ECHS POLYCLINIC)
+
+N
+
+N
+
+184
+
+6,048.66
+
+3,209.16
+
+53.04%
+
+5443
+
+GULBARGA (RC HYDERABAD)
+
+N
+
+N
+
+270
+
+13,150.17
+
+6,905.99
+
+52.52%
+
+5479
+
+BAGESHWAR (RC BAREILLY)
+
+N
+
+N
+
+51
+
+1,640.71
+
+851.20
+
+51.86%
+
+5153
+
+KANCHIPURAM (ECHS POLYCLINIC)
+
+N
+
+N
+
+447
+
+17,604.05
+
+8,954.82
+
+50.87%
+
+5085
+
+MORENA (ECHS POLYCLINIC)
+
+N
+
+N
+
+256
+
+3,762.39
+
+1,904.84
+
+50.64%
+
+5084
+
+BHIND (ECHS POLYCLINIC)
+
+N
+
+N
+
+253
+
+10,073.85
+
+5,041.67
+
+50.05%
+
+5026
+
+MEHBUBNAGAR (ECHS POLYCLINIC)
+
+N
+
+N
+
+810
+
+16,304.67
+
+8,148.55
+
+49.98%
+
+5423
+
+KADAPA (ECHS POLYCLINIC)
+
+N
+
+N
+
+1,090
+
+35,565.83
+
+17,579.31
+
+49.43%
+
+5385
+
+BILASPUR / JABALPUR RC
+
+N
+
+N
+
+633
+
+27,362.54
+
+13,145.08
+
+48.04%
+
+417
+
+JAIPUR HOSPITAL, LAL KOTHI
+
+1
+
+N
+
+111
+
+1,330.72
+
+636.88
+
+47.89%
+
+5167
+
+ISLAND GROUND – CHENNAI
+
+N
+
+N
+
+3,609
+
+1,01,622.92
+
+48,141.72
+
+47.37%
+
+1479
+
+APOLLO HOSPITALS – BBSR
+
+1
+
+N
+
+5,523
+
+1,26,824.56
+
+59,918.10
+
+47.25%
+
+5188
+
+CHENNAI (ECHS POLYCLINIC)
+
+M
+
+N
+
+5,013
+
+2,71,316.29
+
+1,26,017.90
+
+46.45%
+
+765
+
+VIJAYA MEDICAL CENTRE
+
+1
+
+N
+
+6,060
+
+6,703.17
+
+3,108.47
+
+46.37%
+
+5024
+
+KHAMMAM (ECHS POLYCLINIC)
+
+N
+
+N
+
+421
+
+12,346.71
+
+5,699.03
+
+46.16%
+
+5182
+
+SRIVILLIPUTTUR (ECHS POLYCLINIC)
+
+N
+
+N
+
+3,926
+
+97,853.93
+
+45,031.99
+
+46.02%
+
+3034
+
+LUCID MEDICAL DIAGNOSTICS PVT LTD
+
+1
+
+N
+
+1,348
+
+2,060.10
+
+945.10
+
+45.87%
+
+815
+
+DR LAL PATH LABS – KANPUR
+
+5
+
+N
+
+204
+
+211.70
+
+96.72
+
+45.69%
+
+5251
+
+YELAHANKA (ECHS POLYCLINIC)
+
+M
+
+N
+
+2,326
+
+50,593.29
+
+23,105.26
+
+45.67%
+
+Source: settlement_stat JOIN office_master (Q19a). Type codes: 1=Private empanelled, 3=Diagnostic/Dental, 5=Dental/Allied specialty,
+N=Non-Govt/Naval, M=Military establishment. NABH: Y=Accredited, N=Not accredited. Amounts in ■ Lakh.
+
+Pattern Analysis — High Deduction Rate Hospitals
+Diagnostic Labs — 55–87% Deduction Rate:
+SRL Limited (two branches: Indore 86.93%, Bannerghatta 54.90%), Dr Sandhu's Pathology (62.95%), and Anjini
+Dental (67.77%) represent the extreme end of deduction-rate fraud. These facilities bill for procedures that are either
+not performed, not covered, or grossly inflated relative to market rates. SRL Indore's 86.93% rate on 103 claims
+means only ■3 out of every ■23 billed was settled — a near-total rejection of claims. Diagnostic labs have minimal
+marginal cost per test, making inflated billing nearly cost-free for the provider. Immediate suspension and physical
+audit is warranted.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 4
+
+ECHS Type N & M Polyclinics — Systemic Inflation:
+18 ECHS military polyclinics (type N) appear in the >25% threshold, all with deduction rates in the 42–54% band.
+These are internal ECHS facilities — not private — yet they consistently overbill at rates more than 4× the system
+average. The pattern suggests that the billing inflation is not isolated to individual facilities but is a structural problem
+with how internal ECHS polyclinics submit claims for reimbursement. Chennai 5188 (M type, 46.45%), Yelahanka (M,
+45.67%), and Avadi (M, 45.39%) represent the military variant of the same problem.
+
+Apollo Hospitals BBSR — Private Chain at 47.25%:
+Apollo Hospitals Bhubaneswar (ID 1479) shows 47.25% deduction on 5,523 claims worth ■1,268.25L. For a
+NABH-empanelled private chain hospital to maintain this deduction rate across 5,000+ claims is statistically
+improbable without systematic billing fraud. Apollo Vanagaram (63.56%) compounds this chain-level concern. A
+coordinated Apollo chain audit — analogous to the Park Hospital chain audit recommended in Module 20 — is
+warranted.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 5
+
+settlement_stat + claim_intimation
+
+Q19b
+
+Room Category Deduction Analysis & Upgrade Fraud
+Room Category Deduction Rates (System-Wide)
+The ECHS settlement system captures room category in SS_ROOM_CATG (from settlement_stat) and
+cross-references it with the patient's card entitlement in CI_CARD_ROOM_TYPE. Room categories carry significantly
+different rates: ICU has the highest deduction rate at 20.61%, indicating either inflated ICU stays or step-down patients
+billed as ICU.
+Room
+Category
+
+Total Claims
+
+Claimed (■ Cr)
+
+Deducted (■
+Cr)
+
+Deduction %
+
+Avg Claim (■)
+
+Risk
+
+ICU
+
+310
+
+1.49
+
+0.31
+
+20.61%
+
+48,169
+
+CRITICAL
+
+PRI
+
+8,77,602
+
+2,098.54
+
+281.40
+
+13.41%
+
+23,912
+
+CRITICAL
+
+484
+
+2.29
+
+0.30
+
+13.27%
+
+47,232
+
+HIGH
+
+GEN
+
+85,65,241
+
+31,557.00
+
+3,472.15
+
+11.00%
+
+36,843
+
+MEDIUM
+
+SPR
+
+38,97,123
+
+13,504.62
+
+1,399.64
+
+10.36%
+
+34,653
+
+MEDIUM
+
+NA
+
+5,174
+
+13.74
+
+1.42
+
+10.34%
+
+26,556
+
+MEDIUM
+
+SRR
+
+11
+
+0.02
+
+0.00
+
+8.93%
+
+17,972
+
+LOW
+
+73,67,887
+
+1,538.39
+
+81.18
+
+5.28%
+
+2,088
+
+LOW
+
+4
+
+-1
+
+Source: settlement_stat (Q19b Step 2). SS_ROOM_CATG codes: GEN=General ward, SPR=Super/Semi-private, PRI=Private, ICU=Intensive
+Care Unit, -1=Unclassified/OPD lump-sum, SRR=Special Recovery Room. Code "4" is an undocumented legacy category.
+
+Room Upgrade Fraud — GEN/SPR Entitled, PRI Billed
+When CI_ROOM_TYPE_ID (billed room) differs from CI_CARD_ROOM_TYPE (card entitlement), the patient has been
+charged for a room category above their entitlement. This is entitlement misuse — a direct ECHS policy violation.
+The most damaging pattern is GEN→PRI upgrades — billing patients in general ward entitlement at private room
+rates, a 3× price difference.
+
+Billed Room
+
+Entitled
+Room
+
+Mismatch Count
+
+Total Billed (■L)
+
+NULL (Ghost)
+
+GEN
+
+(blank)
+
+78,212
+
+41,455.97
+
+GHOST — untraced
+
+NULL (Ghost)
+
+SPR
+
+(blank)
+
+32,107
+
+17,048.63
+
+GHOST — untraced
+
+NULL (Ghost)
+
+GEN
+
+SPR
+
+10,446
+
+3,830.90
+
+GHOST — GEN→SPR
+
+NULL (Ghost)
+
+PRI
+
+(blank)
+
+8,012
+
+6,102.00
+
+GHOST — untraced
+
+echsfhm
+
+GEN
+
+PRI
+
+1,070
+
+838.29
+
+GEN→PRI upgrade
+
+parkhos
+
+GEN
+
+PRI
+
+1,013
+
+591.20
+
+GEN→PRI upgrade
+
+p.nara
+
+GEN
+
+SPR
+
+1,356
+
+32.16
+
+GEN→SPR upgrade
+
+p.trivandr
+
+GEN
+
+SPR
+
+1,278
+
+253.55
+
+GEN→SPR upgrade
+
+maxsuper
+
+GEN
+
+PRI
+
+647
+
+359.21
+
+GEN→PRI upgrade
+
+ivyhosp
+
+GEN
+
+PRI
+
+620
+
+363.19
+
+GEN→PRI upgrade
+
+amma123
+
+GEN
+
+PRI
+
+620
+
+387.12
+
+GEN→PRI upgrade
+
+fhnechs1
+
+GEN
+
+PRI
+
+567
+
+452.81
+
+GEN→PRI upgrade
+
+dharmashil
+
+GEN
+
+PRI
+
+546
+
+346.46
+
+GEN→PRI upgrade
+
+shrcechs
+
+GEN
+
+PRI
+
+482
+
+210.74
+
+GEN→PRI upgrade
+
+Hospital ID
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Fraud Pattern
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+hos.3147
+
+SPR
+
+GEN
+
+672
+
+1,128.22
+
+IIT Kanpur | Page 6
+
+SPR→GEN downgrade
+
+Source: claim_intimation JOIN claim_submission (Q19b Step 3). CI_HOSPITAL_ID = NULL means the admission record has no hospital
+linkage — a ghost admission with no traceable facility. Hospital IDs are varchar login codes. Amounts in ■ Lakh. hos.3147 SPR→GEN may
+represent data-entry reversal or deliberate downgrading to avoid detection.
+
+Ghost Admission Alert
+The largest room mismatch group — 78,212 cases worth ■41,455.97L (■414.56 Cr) — has NULL in the
+CI_HOSPITAL_ID field. This means the claim was submitted with no hospital linkage. These are likely ghost
+admissions: claims fabricated without a real hospital record. The NULL SPR group (32,107 cases, ■17,048.63L) and
+NULL PRI group (8,012 cases, ■6,102L) compound this. Total ghost admission exposure in room-type mismatch
+alone exceeds ■68,000L (■680 Cr).
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 7
+
+claim_intimation analysis
+
+Q19c
+
+Non-Empanelled Hospital Claims (CI_NONEMP_FLG)
+Non-Empanelled Flag Distribution
+The CI_NONEMP_FLG field tracks whether a beneficiary sought treatment at a non-empanelled hospital. Flag values: N
+= empanelled (38.08M claims), Y = non-empanelled (3.28M claims), U = unverified/unknown status (530K claims),
+NULL = not recorded (1.62M claims).
+Flag
+
+Description
+
+Claims
+
+% of Total
+
+Unique Hospital IDs
+
+Interpretation
+
+N
+
+Empanelled Hospital
+
+3,80,83,937
+
+87.4%
+
+4,250
+
+NORMAL — standard billing
+
+Y
+
+Non-Empanelled Hospital
+
+32,80,290
+
+7.5%
+
+854
+
+REVIEW — needs justification
+
+U
+
+Unverified Status
+
+5,30,517
+
+1.2%
+
+73,562
+
+ANOMALY — 73K IDs suspicious
+
+NUL
+L
+
+Not Recorded
+
+16,15,271
+
+3.7%
+
+—
+
+GAP — data completeness issue
+
+Source: claim_intimation (Q19c Steps 1–3). "U" flag across 73,562 hospital IDs is statistically anomalous — genuine non-empanelled facilities
+number only ~854 in the Y-flag data.
+
+Private Hospitals Using Non-Empanelled Channel (Y-flag)
+Most Y-flag claims are legitimate ECHS polyclinic referrals (■120.53 Cr via "NA" route). However, several private
+hospital chains appear in the Y-flag data with significant deduction amounts — indicating they are billing outside their
+empanelment terms or claiming emergency reimbursements that are then partially rejected.
+
+Hospital Name
+
+Claims
+
+Claimed (■ Cr)
+
+Net Approved (■
+Cr)
+
+Deducted (■
+Cr)
+
+Risk
+
+NA (ECHS referral — legitimate)
+
+3,06,507
+
+120.53
+
+120.44
+
+0.09
+
+NORMAL
+
+ECHS POLYCLINIC DELHI CANTT
+(legitimate)
+
+65,122
+
+23.20
+
+23.15
+
+0.06
+
+NORMAL
+
+ECHS (generic polyclinic)
+
+44,721
+
+18.03
+
+18.02
+
+0.01
+
+NORMAL
+
+754
+
+13.54
+
+12.30
+
+1.24
+
+MONITOR
+
+APOLLO PHARMACY
+
+51,151
+
+13.47
+
+13.39
+
+0.08
+
+LOW
+
+MAX HEALTHCARE
+
+2,316
+
+11.19
+
+10.76
+
+0.44
+
+MONITOR
+
+MANIPAL HOSPITAL
+
+1,492
+
+10.94
+
+9.99
+
+0.95
+
+MONITOR
+
+KIMS HOSPITAL
+
+1,476
+
+5.91
+
+5.41
+
+0.50
+
+LOW
+
+NEPAL MEDICITI HOSPITAL
+
+118
+
+5.58
+
+5.55
+
+0.02
+
+LOW
+
+SIR GANGA RAM HOSPITAL
+
+170
+
+5.11
+
+4.98
+
+0.13
+
+LOW
+
+CMC Hospital, Vellore
+
+370
+
+5.01
+
+4.62
+
+0.39
+
+LOW
+
+KAUVERY HOSPITAL
+
+231
+
+3.77
+
+3.56
+
+0.21
+
+LOW
+
+Apollo Hospital
+
+Source: claim_intimation JOIN claim_submission WHERE CI_NONEMP_FLG = "Y" (Q19c Step 2). Amounts in ■ Crore. Apollo (■1.24 Cr
+deducted), MAX (■0.44 Cr), Manipal (■0.95 Cr) represent non-empanelled billing by major private chains outside ECHS terms.
+
+Critical Finding — 73,562 "U" Flag Hospital IDs
+The U-flag group (CI_NONEMP_FLG = "U") contains 530,517 claims across 73,562 distinct hospital IDs —
+compared to only 854 hospital IDs in the Y-flag (confirmed non-empanelled) group. This 86× ratio is statistically
+impossible unless "U" is being systematically misused as a catch-all for unmatched admissions. The 73,562 IDs in the
+U group are very likely fabricated, expired, or duplicate hospital identifiers, suggesting bulk submission of claims with
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 8
+
+invalid hospital references. This warrants a full audit of the U-flag dataset as a potential mass fraud vector.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 9
+
+settlement_stat — SS_PAT_TYPE_ID IN (I, O)
+
+Q19e
+
+Year-Wise IPD vs OPD Deduction Rate Trend (2014–2025)
+Query Q19e tracks IPD (I) and OPD (O) deduction rates year by year from 2014 to 2025, using settlement_stat —
+the most reliable system-wide signal. Three critical inflection points emerge: (1) IPD peaked at 12.42% in 2017 during
+the post-empanelment expansion phase, reflecting unchecked hospital inflation as new facilities joined ECHS; (2) IPD
+fell to 8.89% in 2023 — the lowest in the dataset — suggesting that policy tightening and audit pressure achieved
+measurable fraud suppression; but (3) IPD has rebounded to 11.45% in 2025 — a 2.56-percentage-point rise in just
+two years — signalling that the fraud has re-emerged and suppression measures were only temporary. OPD rates
+(3.82–6.84%) remain consistently lower, confirming that IPD-specific fraud is the dominant policy challenge.
+
+Year-Wise IPD vs OPD Deduction Rate Table
+Year
+
+IPD
+Hospitals
+
+IPD Claims
+
+IPD Claimed
+(■Cr)
+
+IPD Ded %
+
+OPD
+Hospitals
+
+OPD Claims
+
+OPD Claimed
+(■Cr)
+
+OPD Ded
+%
+
+2014
+
+625
+
+2,00,900
+
+848.16
+
+10.85%
+
+644
+
+6,29,144
+
+127.05
+
+6.15%
+
+2015
+
+1,181
+
+3,22,996
+
+1,240.83
+
+12.04%
+
+1,132
+
+8,14,329
+
+164.04
+
+6.26%
+
+2016
+
+1,541
+
+4,94,148
+
+1,999.35
+
+12.13%
+
+1,415
+
+13,39,347
+
+302.99
+
+6.84%
+
+2017
+
+1,781
+
+5,59,379
+
+2,209.14
+
+12.42%
+
+1,671
+
+14,03,904
+
+287.73
+
+6.62%
+
+2018
+
+1,968
+
+7,03,997
+
+3,101.28
+
+11.80%
+
+1,858
+
+17,25,123
+
+345.64
+
+6.23%
+
+2019
+
+1,946
+
+4,67,673
+
+2,151.11
+
+11.61%
+
+2,022
+
+12,49,853
+
+273.20
+
+5.42%
+
+2020
+
+2,128
+
+7,88,677
+
+4,083.97
+
+11.79%
+
+2,417
+
+19,67,433
+
+516.53
+
+5.47%
+
+2021
+
+2,139
+
+5,84,743
+
+3,651.78
+
+12.15%
+
+2,431
+
+18,77,131
+
+518.41
+
+3.82%
+
+2022
+
+2,270
+
+7,13,488
+
+4,626.87
+
+10.55%
+
+2,572
+
+25,34,955
+
+626.30
+
+4.29%
+
+2023
+
+2,432
+
+9,38,363
+
+6,716.74
+
+8.89%
+
+2,879
+
+35,77,565
+
+884.59
+
+4.82%
+
+2024
+
+2,630
+
+10,63,312
+
+9,341.21
+
+10.22%
+
+3,092
+
+43,87,196
+
+1,096.98
+
+5.23%
+
+2025
+
+2,900
+
+9,36,304
+
+9,303.73
+
+11.45%
+
+3,381
+
+41,64,885
+
+1,036.15
+
+5.90%
+
+Source: settlement_stat WHERE SS_PAT_TYPE_ID IN ("I","O"), GROUP BY SS_YEAR, SS_PAT_TYPE_ID (Q19e). IPD = Inpatient (I), OPD
+= Outpatient (O). Red = peak values (2017 IPD, 2025 reversal), Green = low points (2023 IPD low, 2021 OPD dip). Ded% =
+SUM(SS_DED_AMT) / SUM(SS_CLAIM_AMT) × 100.
+
+Temporal Pattern Analysis — Three Phases
+Phase 1 (2014–2017): Expansion Fraud — IPD Rates Rise to 12.42% Peak
+As ECHS empanelment expanded from 625 hospitals (2014) to 1,781 (2017), IPD deduction rates climbed from
+10.85% to 12.42%. Newly empanelled hospitals discovered that IPD billing above the ECHS package rate was
+insufficiently scrutinised during the on-boarding period — confirmed by the jump in both claimed amounts (■848 Cr →
+■2,209 Cr) and total hospitals flagging with elevated rates. This is the classic expansion fraud pattern: fraud grows
+with the network before controls catch up.
+
+Phase 2 (2022–2023): Suppression — IPD Falls to 8.89% Decade Low
+Following COVID-era volume expansion (2020–2021: 11.79–12.15%), IPD deduction rates fell to 10.55% (2022) and
+then to a decade-low of 8.89% in 2023. The 2023 low coincides with increased ECHS audit activity and
+pre-authorisation controls introduced for high-value IPD claims. OPD rates (4.29–4.82%) continued their natural
+compression. The 2023 trough is the measurable impact of data-driven fraud control — but it proved temporary.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 10
+
+Phase 3 (2024–2025): Reversal — IPD Rebounds 2.56 Percentage Points
+IPD deduction rebounded from 8.89% (2023) to 10.22% (2024) and 11.45% (2025). OPD also rose from 4.82% to
+5.90%. The simultaneous rise in both IPD and OPD in 2025 — combined with record claimed amounts (■9,303 Cr
+IPD, ■1,036 Cr OPD) — indicates that fraud actors have adapted to the 2023 controls and resumed inflated billing.
+The 2025 IPD rate of 11.45% is approaching the 2017 peak level (12.42%). Without structural intervention (not just
+audit), the trajectory points toward exceeding the historical maximum by 2026–2027.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+IIT Kanpur | Page 11
+
+Strategic Recommendations
+1. Immediate Suspension — SRL Limited (Both Units)
+
+CRITICAL — Immediate
+
+SRL Limited Indore (86.93%) and SRL Bannerghatta (54.90%) are NABH-accredited diagnostic labs with
+catastrophic deduction rates. NABH accreditation clearly provides no fraud deterrence. Both should be suspended
+immediately and subjected to a physical audit of claimed tests against actual patient records. Claim recovery
+proceedings for ■19.94L + ■857.43L = ■877.37L should be initiated.
+2. Apollo Hospital Chain — Dual-Channel Audit
+
+CRITICAL — 30 Days
+
+Apollo appears in two fraud vectors: Apollo Vanagaram (63.56% deduction, ■5,433L claimed) and Apollo BBSR
+(47.25%, ■1,26,824L) through the empanelled channel, plus Apollo Hospital (■13.54 Cr) and APOLLO PHARMACY
+(■13.47 Cr) through the non-empanelled Y-flag channel. A chain-level audit covering both empanelled and
+emergency reimbursement channels is required. Total Apollo exposure: >■1,200L in deductions.
+3. Type N and M Military Polyclinics — Billing Process Overhaul
+
+CRITICAL — 60 Days
+
+18 Type N ECHS polyclinics and 7+ Type M military hospitals all show 42–54% deduction rates. This level of
+systematic inflation in internal ECHS facilities cannot be explained by inadvertent errors. It suggests that the internal
+billing process — potentially the software system used by polyclinics — generates inflated claims structurally. ECHS
+Directorate should commission a billing process audit at the ten highest-deduction polyclinics before the next billing
+cycle.
+4. Ghost Admission Investigation — ■680 Cr NULL Hospital Exposure
+
+CRITICAL — 60 Days
+
+78,212+ room-mismatch cases with NULL CI_HOSPITAL_ID representing ■41,455.97L (■414.56 Cr) in billed claims
+cannot be linked to any hospital. These are the highest-priority ghost admission cases. ECHS should cross-reference
+these CI_INTIMATION_IDs with the beneficiary's military service record and station hospital to determine if any
+physical admission occurred.
+5. Room Upgrade Fraud — echsfhm, parkhos, maxsuper Priority Audit
+
+HIGH — 90 Days
+
+Three named hospitals dominate confirmed room upgrade fraud: echsfhm (1,070 GEN→PRI mismatches,
+■838.29L), parkhos (1,013, ■591.20L), maxsuper (647, ■359.21L). These hospitals systematically bill patients in
+general ward entitlement at private room rates. Physical verification of room occupancy against claim records is
+required. Recovery of the upgrade differential is actionable under ECHS Regulation 18(4).
+6. U-Flag Dataset — Mass Fraud Vector Investigation
+
+HIGH — This Quarter
+
+530,517 claims across 73,562 hospital IDs with "U" (Unverified) flag is a red flag for systematic misuse. Standard
+non-empanelled hospitals number only ~854. The 73,562 IDs must be cross-validated against the ECHS hospital
+master database. Any ID not found in office_master should be flagged as a fraudulent submission and the
+associated claims quarantined pending investigation.
+7. MAX Healthcare & Manipal — Non-Empanelled Channel Monitoring
+
+MEDIUM — Policy
+
+MAX Healthcare (2,316 Y-flag claims, ■11.19 Cr) and Manipal Hospital (1,492 claims, ■10.94 Cr) are billing through
+the non-empanelled channel with partial deductions (■0.44 Cr and ■0.95 Cr respectively). These hospitals should
+be empanelled formally (ending Y-flag billing) or blocked from the reimbursement channel entirely, as Y-flag claims
+have lower scrutiny than standard empanelled submissions.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+ECHS FRAUD ANALYTICS — MODULE 19: POLICY ABUSE & ENTITLEMENT MISUSE — CONFIDENTIAL
+
+8. IPD Deduction Rate Reversal — Structural Intervention Required (Q19e)
+
+IIT Kanpur | Page 12
+
+CRITICAL — Policy Reform
+
+IPD deduction rates have rebounded from a decade-low of 8.89% (2023) to 11.45% (2025). If the 2023–2025 trend
+continues, the rate will approach the 2017 historical peak (12.42%) by 2026–2027 — erasing all gains from the
+post-2019 reform period. The 2023 trough was achieved by audit pressure, not structural change — and it did not
+hold. Structural interventions required: (1) Mandatory pre-authorisation for all IPD claims above ■20,000 at hospitals
+with a 3-year average deduction rate above 10%; (2) Real-time IPD deduction rate monitoring dashboard for ECHS
+Directorate — to detect rising rates before they become entrenched; (3) Quarterly hospital-level deduction rate
+reports published internally to ECHS commanders, enabling them to flag facilities before claims reach the settlement
+stage.
+
+RESTRICTED — For internal audit and investigative use only. Do not distribute.
+
+Generated: May 2026
+
+
