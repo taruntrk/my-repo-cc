@@ -51,8 +51,8 @@ def extract_pattern_8_bait_and_switch():
     LEFT JOIN cghs_region_master crm ON o.OM_OFFICE_CGHS_CITY_ID = crm.CRM_CITY_ID
     WHERE c.CI_APPROX_COST > 0
       AND cs.CS_GR_CLAIM_AMT > c.CI_APPROX_COST
-    ORDER BY inflation_percentage DESC
       AND YEAR(c.CI_ADMISSION_DATE) BETWEEN 2021 AND 2026
+    ORDER BY inflation_percentage DESC
 
     """
     

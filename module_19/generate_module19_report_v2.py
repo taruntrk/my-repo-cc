@@ -138,7 +138,6 @@ print("Loading data files (2021-2025 scope)...")
 
 # P1: aggregated hospital-level (already grouped)
 df_1 = load_latest("new_19_01_all_hospital_deductions_*.csv")
-
 # P2-P10: claim-level, earliest timestamp files
 df_2  = load_latest("new_19_02_pattern_2_room_upgrade_fraud_*.csv")
 df_3  = load_latest("new_19_03_pattern_3_ghost_admissions_*.csv")
@@ -149,6 +148,39 @@ df_7  = load_latest("new_19_07_pattern_7_unlisted_procedures_*.csv")
 df_8  = load_latest("new_19_08_pattern_8_bait_and_switch_*.csv")
 df_9  = load_latest("new_19_09_pattern_9_stay_extension_*.csv")
 df_10 = load_latest("new_19_10_pattern_10_emergency_bypass_*.csv")
+
+# ── APPLY PANDAS FRAUD FILTERS ────────────────────────────────────────────────
+# Refine the raw extracted universe to strictly target impossible/fraud cases
+
+if not df_1.empty and 'billed_amount' in df_1.columns:
+    df_1 = df_1[df_1['billed_amount'] >= 10000] # P1: Exclude tiny claims with high % deduction
+    df_1 = df_1.groupby(['hospital_id', 'registered_hospital_name', 'hospital_city', 'hospital_state', 'cghs_region', 'hospital_type'], dropna=False).agg(
+        total_claims=('claim_id', 'count'),
+        total_claimed_lakh=('billed_amount', lambda x: x.sum() / 100000),
+        total_approved_lakh=('approved_amount', lambda x: x.sum() / 100000),
+        total_deducted_lakh=('deducted_amount', lambda x: x.sum() / 100000)
+    ).reset_index()
+    df_1['deduction_pct'] = (df_1['total_deducted_lakh'] / df_1['total_claimed_lakh']) * 100
+    df_1['hospital_name'] = df_1['registered_hospital_name']
+
+if not df_3.empty:
+    df_3['patient_type'] = df_3['patient_type'].fillna('')
+    df_3 = df_3[df_3['patient_type'].str.contains('In Patient', case=False, na=False)]
+
+if not df_4.empty:
+    df_4['billed_amount'] = pd.to_numeric(df_4['billed_amount'], errors='coerce').fillna(0)
+    df_4 = df_4[df_4['billed_amount'] >= 50000] # Non-empanelled should not be doing massive billing
+
+if not df_5.empty:
+    df_5 = df_5[df_5['billed_amount'] > 5000]
+
+if not df_8.empty:
+    df_8['inflation_percentage'] = pd.to_numeric(df_8['inflation_percentage'], errors='coerce').fillna(0)
+    df_8 = df_8[df_8['inflation_percentage'] >= 50] # True Bait & Switch is > 50% inflation
+
+if not df_10.empty:
+    df_10['total_billed_amount'] = pd.to_numeric(df_10['total_billed_amount'], errors='coerce').fillna(0)
+    df_10 = df_10[df_10['total_billed_amount'] >= 100000] # True Emergency Bypass targets massive planned-like surgeries
 
 # ── DATA CLEANING ─────────────────────────────────────────────────────────────
 
@@ -228,7 +260,7 @@ H.append(f"""
     <div class="cover-box"><div class="cover-box-label">Period</div><div class="cover-box-val">FY 2021–25</div></div>
     <div class="cover-box"><div class="cover-box-label">Claims Scanned</div><div class="cover-box-val">{fmt(kpi_total_claims)}+</div></div>
     <div class="cover-box"><div class="cover-box-label">Patterns Run</div><div class="cover-box-val">10 Patterns</div></div>
-    <div class="cover-box"><div class="cover-box-label">Anomalies Detected</div><div class="cover-box-val" style="color:#e74c3c">{fmt(total_anomalies)}</div></div>
+    <div class="cover-box"><div class="cover-box-label">Forensic Hits</div><div class="cover-box-val" style="color:#e74c3c">{fmt(total_anomalies)}</div></div>
   </div>
   <div class="cover-org">IIT KANPUR — Data Analytics &amp; Fraud Intelligence Division</div>
   <div class="cover-date">{today_str} | Ex-Servicemen Contributory Health Scheme (ECHS)</div>
@@ -243,7 +275,7 @@ H.append(f"""
 <p>This report executes a deep-dive forensic analysis targeting systemic hospital-driven policy abuse and entitlement misuse
 within the ECHS claims ecosystem for the period <b>FY 2021–2025</b>.
 Across <b>{fmt(kpi_total_claims)}+ claims</b> scanned, a total of <b>{fmt(total_anomalies)} fraud markers</b> were identified
-with a leakage exposure of <b>₹{kpi_deducted_cr:,.2f} Cr</b>.
+with an overbilling exposure of <b>₹{kpi_deducted_cr:,.2f} Cr</b>.
 <i>Note: A single claim can be flagged under multiple patterns simultaneously (e.g., a ghost admission that is also a room upgrade),
 so the marker count exceeds the unique claim count. Unique flagged claims: ~{fmt(10879838)}.</i></p>
 <div style="background:#fffbf0;border-left:4px solid {GOLD};padding:8px 12px;margin-bottom:10px;font-size:8pt;">
@@ -255,9 +287,9 @@ finding of fraud. Final fraud determination requires case-level review.
 
 <div class="metric-row">
   <div class="mbox"><div class="mbox-label">Total Claims Scanned</div><div class="mbox-val">{fmt(kpi_total_claims)}+</div><div class="mbox-sub">FY 2021–2025 population</div></div>
-  <div class="mbox"><div class="mbox-label">Anomalies Flagged</div><div class="mbox-val" style="color:#e74c3c">{fmt(total_anomalies)}</div><div class="mbox-sub">claims with abuse markers</div></div>
-  <div class="mbox"><div class="mbox-label">Total Claimed (Anomalies)</div><div class="mbox-val">₹{kpi_claimed_cr:,.0f} Cr</div><div class="mbox-sub">system-wide exposure</div></div>
-  <div class="mbox"><div class="mbox-label">Leakage Identified</div><div class="mbox-val" style="color:#e74c3c">₹{kpi_deducted_cr:,.0f} Cr</div><div class="mbox-sub">savings established</div></div>
+  <div class="mbox"><div class="mbox-label">Pattern Matches</div><div class="mbox-val" style="color:#e74c3c">{fmt(total_anomalies)}</div><div class="mbox-sub">claims with abuse markers</div></div>
+  <div class="mbox"><div class="mbox-label">Total Claimed (Flagged)</div><div class="mbox-val">₹{kpi_claimed_cr:,.0f} Cr</div><div class="mbox-sub">system-wide exposure</div></div>
+  <div class="mbox"><div class="mbox-label">Audit Deductions</div><div class="mbox-val" style="color:#e74c3c">₹{kpi_deducted_cr:,.0f} Cr</div><div class="mbox-sub">savings established</div></div>
 </div>
 
 <h1 style="margin-top:14px">Fraud Forensics — Detection Patterns &amp; Methodologies</h1>
@@ -283,7 +315,7 @@ finding of fraud. Final fraud determination requires case-level review.
 </table>
 
 <h1 style="margin-top:12px">Immediate Recommended Actions</h1>
-<div class="action-item"><span class="action-num">1.</span> <b>Targeted Audits on Top Overbilling Facilities:</b> Prioritize physical audits at Park Hospital chain (multiple locations) and Vijay Hospital — the two largest absolute leakage generators in the FY 2021-2025 dataset.</div>
+<div class="action-item"><span class="action-num">1.</span> <b>Targeted Audits on Top Overbilling Facilities:</b> Prioritize physical audits at Park Hospital chain (multiple locations) and Vijay Hospital — the two largest absolute overbilling generators in the FY 2021-2025 dataset.</div>
 <div class="action-item"><span class="action-num">2.</span> <b>Hard-Reject Ghost Claims at BPA Portal:</b> Enforce mandatory Hospital ID validation — any claim without a registered Hospital ID must be rejected before entering the settlement pipeline.</div>
 <div class="action-item"><span class="action-num">3.</span> <b>Pre-Authorization Mandatory for Y-Flag:</b> Restrict Y-Flag usage to genuine life-threatening emergencies with real-time clinical verification. Current data shows polyclinics as top Y-Flag users, not emergencies.</div>
 <div class="action-item"><span class="action-num">4.</span> <b>Deploy Pre-Payment AI Interception:</b> Implement billing interception rules targeting NMI Loophole, Bait &amp; Switch, and Emergency Gateway claims before payment is released.</div>
@@ -302,8 +334,8 @@ if not df_1.empty:
 <div class="pb">
 <div class="nob">
 <div class="ph" style="border-left-color:#c0392b">
-  <div class="ph-label" style="color:#c0392b">PATTERN 1 (CORPORATE LEAKAGE)</div>
-  <div class="ph-ctx">Top Absolute Leakage Facilities</div>
+  <div class="ph-label" style="color:#c0392b">PATTERN 1 (SYSTEMIC OVERBILLING)</div>
+  <div class="ph-ctx">Top Absolute Deduction Facilities</div>
   <div class="ph-title">High Deduction Hospitals</div>
 </div></div>
 <p><b>Fraud Mechanism:</b> Hospitals systemically inflate diagnostic and routine package costs at scale, leading to extreme deduction rates when subjected to basic automated claim processing checks.</p>
@@ -647,7 +679,7 @@ H.append(f"""
   <tr><td><b>Pattern 8 (Bait &amp; Switch)</b></td><td>{fmt(len(df_8))} Claims</td><td>{cr(gs(df_8,'final_billed_amount'))}</td><td>{cr(gs(df_8,'final_billed_amount')-gs(df_8,'final_approved_amount'))}</td><td>{pct_str(gs(df_8,'final_billed_amount')-gs(df_8,'final_approved_amount'), gs(df_8,'final_billed_amount'))}</td></tr>
   <tr><td><b>Pattern 9 (Stay Extension)</b></td><td>{fmt(len(df_9))} Cases</td><td>{cr(gs(df_9,'total_billed_amount'))}</td><td style="color:#999">—</td><td style="color:#999">—</td></tr>
   <tr><td><b>Pattern 10 (Emergency Gateway)</b></td><td colspan="4" style="color:#d4680a;font-style:italic;">FY 2021–2025 data not yet extracted — pending separate DB query</td></tr>
-  <tr style="background:{NAV};color:#fff;"><td><b style="color:#fff;">Total System Exposure</b></td><td style="color:#fff;">{fmt(total_anomalies)} Cases</td><td style="color:#fff;">₹{kpi_claimed_cr:,.2f} Cr</td><td style="color:#fff;">₹{kpi_deducted_cr:,.2f} Cr</td><td style="color:#fff;">{kpi_ded_pct:.2f}%</td></tr>
+  <tr style="background:{NAV};color:#fff;"><td><b style="color:#fff;">Total Forensic Exposure</b></td><td style="color:#fff;">{fmt(total_anomalies)} Cases</td><td style="color:#fff;">₹{kpi_claimed_cr:,.2f} Cr</td><td style="color:#fff;">₹{kpi_deducted_cr:,.2f} Cr</td><td style="color:#fff;">{kpi_ded_pct:.2f}%</td></tr>
 </tbody>
 </table>
 
