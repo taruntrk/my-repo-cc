@@ -44,7 +44,7 @@ def extract_pattern_3_ghost_admissions():
         (cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) as deducted_amount
     FROM claim_intimation c
     LEFT JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
-    LEFT JOIN patient_type pt ON c.CI_PATIENT_TYPE = pt.PT_TYPE_ID
+    LEFT JOIN patient_type pt ON c.CI_PATIENT_TYPE = pt.PT_TYPE_CODE
     WHERE c.CI_HOSPITAL_ID IS NULL
       AND cs.CS_GR_CLAIM_AMT > 0
       AND YEAR(c.CI_ADMISSION_DATE) BETWEEN 2021 AND 2026

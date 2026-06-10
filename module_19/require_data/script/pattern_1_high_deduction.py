@@ -46,7 +46,7 @@ def extract_all_hospital_deductions():
         ((cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) / cs.CS_GR_CLAIM_AMT) * 100 as deduction_percentage
     FROM claim_intimation c
     INNER JOIN claim_submission cs ON c.CI_INTIMATION_ID = cs.CS_INTIMATION_ID
-    LEFT JOIN patient_type pt ON c.CI_PATIENT_TYPE = pt.PT_TYPE_ID
+    LEFT JOIN patient_type pt ON c.CI_PATIENT_TYPE = pt.PT_TYPE_CODE
     LEFT JOIN user_details ud ON c.CI_HOSPITAL_ID = ud.UD_USER_ID
     LEFT JOIN office_master o ON ud.UD_OFFICE_ID = o.OM_OFFICE_ID
     LEFT JOIN state_master st ON o.OM_OFFICE_STATE_ID = st.SM_STATE_ID
