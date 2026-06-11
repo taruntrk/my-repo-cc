@@ -171,8 +171,10 @@ if not df_4.empty:
     df_4['billed_amount'] = pd.to_numeric(df_4['billed_amount'], errors='coerce').fillna(0)
     df_4 = df_4[df_4['billed_amount'] >= 50000] # Non-empanelled should not be doing massive billing
 
+df_5_null_ct = 0
 if not df_5.empty:
     df_5 = df_5[df_5['billed_amount'] > 5000]
+    df_5_null_ct = int(df_5['non_empanelled_hospital_name'].isna().sum())
 
 if not df_8.empty:
     df_8['inflation_percentage'] = pd.to_numeric(df_8['inflation_percentage'], errors='coerce').fillna(0)
@@ -196,8 +198,8 @@ def drop_bad_hospitals_reg(df, col='registered_hospital_name'):
 
 df_1 = drop_bad_hospitals(df_1, 'hospital_name')
 df_2 = drop_bad_hospitals(df_2, 'hospital_name')
-df_4 = drop_bad_hospitals_reg(df_4)
-df_5 = drop_bad_hospitals_reg(df_5)
+df_4 = drop_bad_hospitals_reg(df_4, 'non_empanelled_hospital_name')
+df_5 = drop_bad_hospitals_reg(df_5, 'non_empanelled_hospital_name')
 df_6 = drop_bad_hospitals_reg(df_6)
 df_7 = drop_bad_hospitals_reg(df_7)
 df_8 = drop_bad_hospitals_reg(df_8)
@@ -231,14 +233,9 @@ if not df_8.empty:
 if not df_9.empty:
     df_9 = df_9[(df_9['extra_days_requested'] > 0)].dropna(subset=['registered_hospital_name']).copy()
 
-# P5: track null hospital count, then drop for table
-df_5_null_ct = 0
-if not df_5.empty:
-    df_5_null_ct = int(df_5['registered_hospital_name'].isna().sum())
-    df_5 = df_5.dropna(subset=['registered_hospital_name']).copy()
+# P5: null tracking and cleaning handled during data loading/cleaning
 
-# P10: source data only covers 2011-2020 — exclude
-df_10 = pd.DataFrame()
+# P10: source data covers 2021-2026 — processed as is
 
 # ── KPI CALCULATIONS ──────────────────────────────────────────────────────────
 def gs(df, col):
@@ -249,7 +246,7 @@ p1_total_claims   = int(df_1['total_claims'].sum()) if not df_1.empty else 0
 p1_claimed_cr     = df_1['total_claimed_lakh'].sum() / 100 if not df_1.empty else 0
 p1_deducted_cr    = df_1['total_deducted_lakh'].sum() / 100 if not df_1.empty else 0
 
-total_anomalies = sum(len(df) for df in [df_2,df_3,df_4,df_5,df_6,df_7,df_8,df_9]) + p1_total_claims
+total_anomalies = sum(len(df) for df in [df_2,df_3,df_4,df_5,df_6,df_7,df_8,df_9,df_10]) + p1_total_claims
 
 # Calculate True Unique Claims
 all_claim_ids = []
@@ -266,7 +263,9 @@ if unique_claim_count == 0:
 kpi_total_claims = 23100000  # 2.31 Cr scope (2021-2025)
 
 kpi_claimed_cr = p1_claimed_cr + sum([
-    gs(df_2,"billed_amount"), gs(df_3,"billed_amount"), gs(df_6,"billed_amount"),
+    gs(df_2,"billed_amount"), gs(df_3,"billed_amount"),
+    gs(df_4,"billed_amount"), gs(df_5,"billed_amount"),
+    gs(df_6,"billed_amount"),
     gs(df_7,"total_billed_cost"), gs(df_8,"final_billed_amount"),
     gs(df_9,"total_billed_amount"), gs(df_10,"total_billed_amount")
 ]) / 10000000
@@ -276,7 +275,9 @@ kpi_deducted_cr = p1_deducted_cr + sum([
     gs(df_4,"deducted_amount"), gs(df_5,"deducted_amount"),
     gs(df_6,"deducted_amount"),
     gs(df_7,"total_billed_cost") - gs(df_7,"total_sanctioned_cost"),
-    gs(df_8,"final_billed_amount") - gs(df_8,"final_approved_amount")
+    gs(df_8,"final_billed_amount") - gs(df_8,"final_approved_amount"),
+    gs(df_9,"total_billed_amount") - gs(df_9,"total_approved_amount"),
+    gs(df_10,"deducted_amount")
 ]) / 10000000
 
 kpi_ded_pct = (kpi_deducted_cr / kpi_claimed_cr * 100) if kpi_claimed_cr > 0 else 0
@@ -288,9 +289,9 @@ H = [f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>{CSS_STR}</styl
 H.append(f"""
 <div class="cover">
   <div class="cover-topbar"></div>
-  <div class="cover-mod">MODULE 19</div>
-  <div class="cover-title">POLICY ABUSE &amp;<br/>ENTITLEMENT MISUSE</div>
-  <div class="cover-sub">Forensic Audit &amp; Top Offender Identification</div>
+  <div class="cover-title" style="font-size:38pt;">ECHS FRAUD ANALYSIS</div>
+  <div class="cover-mod" style="font-size:11pt; margin-bottom:6px; text-transform:uppercase;">POLICY ABUSE &amp; ENTITLEMENT MISUSE</div>
+  <div class="cover-sub" style="margin-bottom:30px;">Forensic Audit &amp; Top Offender Identification</div>
   <div class="cover-boxes">
     <div class="cover-box"><div class="cover-box-label">Classification</div><div class="cover-box-val">RESTRICTED</div></div>
     <div class="cover-box"><div class="cover-box-label">Period</div><div class="cover-box-val">FY 2021–25</div></div>
@@ -346,7 +347,7 @@ finding of fraud. Final fraud determination requires case-level review.
   <tr><td>7</td><td><b>NMI / Unlisted Procedure Loophole</b></td><td>Billing via unlisted 'NMI' codes to bypass fixed CGHS package rate ceilings</td><td><b>{fmt(len(df_7))} Unlisted Claims</b></td></tr>
   <tr><td>8</td><td><b>Bait &amp; Switch (PA Inflation)</b></td><td>Low Prior Approval secured, massively inflated final bill submitted post-admission</td><td><b>{fmt(len(df_8))} Inflated Claims</b></td></tr>
   <tr><td>9</td><td><b>Stay Extension Farming</b></td><td>Artificial discharge delays to farm daily room rent and routine care charges</td><td><b>{fmt(len(df_9))} Extension Cases</b></td></tr>
-  <tr><td>10</td><td><b>Emergency Gateway Bypass</b></td><td>False emergency declarations bypassing referral ceilings, polyclinic wait times, geography rules</td><td><b style="color:#d4680a;">Data gap — FY 2021–25 pending</b></td></tr>
+  <tr><td>10</td><td><b>Emergency Gateway Bypass</b></td><td>False emergency declarations bypassing referral ceilings, polyclinic wait times, geography rules</td><td><b>{fmt(len(df_10))} Claims Flagged</b></td></tr>
 </tbody>
 </table>
 
@@ -485,8 +486,8 @@ if not df_3.empty:
 
 # ── PATTERN 4: Y-FLAG BYPASS ──────────────────────────────────────────────────
 if not df_4.empty:
-    df_4['registered_hospital_name'] = df_4['registered_hospital_name'].fillna('UNKNOWN')
-    p4 = df_4.groupby('registered_hospital_name').agg(
+    df_4['non_empanelled_hospital_name'] = df_4['non_empanelled_hospital_name'].fillna('UNKNOWN')
+    p4 = df_4.groupby('non_empanelled_hospital_name').agg(
         claims=('claim_id','count'), approved=('approved_amount','sum'), deducted=('deducted_amount','sum')
     ).reset_index().sort_values('claims', ascending=False).head(15)
 
@@ -498,25 +499,25 @@ if not df_4.empty:
   <div class="ph-title">Y-Flag Bypass</div>
 </div></div>
 <p><b>Description:</b> Patients bypassing empanelled networks to receive treatment at non-empanelled facilities via the Y-Flag (emergency) route, ignoring CGHS rate caps entirely.</p>
-<p><b>Note:</b> Y-Flag records in source data do not carry a billed amount — only approved and deducted amounts are captured at settlement. Table sorted by claim volume.</p>
+<p><b>Note:</b> Table sorted by claim volume.</p>
 <div class="tc">Table 4.1 — Top Hospitals/Polyclinics by Y-Flag Volume (Top 15)</div>
 <table class="dt">
 {th("Hospital / Polyclinic Name","Bypass Claims","Net Approved (₹ Cr)","Deducted (₹ Cr)")}
 <tbody>""")
     for _, row in p4.iterrows():
-        H.append(f"<tr><td><b>{str(row['registered_hospital_name'])[:50]}</b></td>"
+        H.append(f"<tr><td><b>{str(row['non_empanelled_hospital_name'])[:50]}</b></td>"
                  f"<td>{fmt(row['claims'])}</td>"
                  f"<td>{cr(row['approved'])}</td><td>{cr(row['deducted'])}</td></tr>")
     H.append(f"""</tbody></table>
 <div class="kf-head">Key Findings</div>
-<div class="kf-item"><b>Polyclinic Dominance:</b> Top Y-Flag users are ECHS polyclinics (Noida, Delhi Cantt, Amritsar) — not private hospitals. This indicates that Y-Flag is being used for routine referrals, not genuine emergencies, defeating the entire purpose of the flag.</div>
+<div class="kf-item"><b>Bypass Routing:</b> Top Y-Flag cases show high volumes routed to private entities (Apollo Hospital, CMC Vellore, Manipal Hospital) as well as ECHS Polyclinics (Delhi Cantt, Chandigarh), indicating a mix of institutional routing and direct private bypassing.</div>
 <div class="kf-item"><b>System Exposure:</b> <b>{fmt(len(df_4))} claims</b> bypassed standard empanelment via Y-Flag across FY 2021-2025.</div>
 </div>""")
 
 # ── PATTERN 5: U-FLAG ANOMALY ─────────────────────────────────────────────────
 if not df_5.empty:
-    df_5['registered_hospital_name'] = df_5['registered_hospital_name'].fillna('UNKNOWN')
-    p5 = df_5.groupby('registered_hospital_name').agg(
+    df_5['non_empanelled_hospital_name'] = df_5['non_empanelled_hospital_name'].fillna('UNKNOWN')
+    p5 = df_5.groupby('non_empanelled_hospital_name').agg(
         claims=('claim_id','count'), deducted=('deducted_amount','sum')
     ).reset_index().sort_values('claims', ascending=False).head(15)
 
@@ -534,11 +535,11 @@ if not df_5.empty:
 {th("Hospital / Polyclinic Name","Unverified Claims","Total Deducted (₹ Cr)")}
 <tbody>""")
     for _, row in p5.iterrows():
-        H.append(f"<tr><td><b>{str(row['registered_hospital_name'])[:55]}</b></td>"
+        H.append(f"<tr><td><b>{str(row['non_empanelled_hospital_name'])[:55]}</b></td>"
                  f"<td>{fmt(row['claims'])}</td><td>{cr(row['deducted'])}</td></tr>")
     H.append(f"""</tbody></table>
 <div class="kf-head">Key Findings</div>
-<div class="kf-item"><b>Blind Spot Exploitation:</b> Rewari leads with {fmt(p5.iloc[0]['claims'])} unverified claims. A system-freeze on U-Flag claim processing pending hospital identity verification is immediately warranted.</div>
+<div class="kf-item"><b>Blind Spot Exploitation:</b> <b>{p5.iloc[0]['non_empanelled_hospital_name'][:35]}</b> leads with {fmt(p5.iloc[0]['claims'])} unverified claims. A system-freeze on U-Flag claim processing pending hospital identity verification is immediately warranted.</div>
 <div class="kf-item"><b>System Exposure:</b> <b>{fmt(len(df_5))} unverified claims</b> processed without scrutiny across FY 2021-2025.</div>
 </div>""")
 
@@ -674,8 +675,14 @@ if not df_9.empty:
 <div class="kf-item"><b>System Exposure:</b> <b>{fmt(len(df_9))} stay extension requests</b> flagged across FY 2021-2025.</div>
 </div>""")
 
-# ── PATTERN 10: EMERGENCY GATEWAY — DATA NOT AVAILABLE FOR 2021-2025 ────────
-H.append(f"""
+# ── PATTERN 10: EMERGENCY GATEWAY BYPASS ──────────────────────────────────────
+if not df_10.empty:
+    df_10['registered_hospital_name'] = df_10['registered_hospital_name'].fillna('UNKNOWN')
+    p10 = df_10.groupby('registered_hospital_name').agg(
+        claims=('claim_id','count'), billed=('total_billed_amount','sum'), deducted=('deducted_amount','sum')
+    ).reset_index().sort_values('claims', ascending=False).head(15)
+
+    H.append(f"""
 <div class="pb">
 <div class="nob">
 <div class="ph" style="border-left-color:#c0392b">
@@ -683,16 +690,23 @@ H.append(f"""
   <div class="ph-ctx">False Medical Urgency</div>
   <div class="ph-title">Emergency Gateway Bypass</div>
 </div></div>
-<p><b>Description:</b> Hospitals falsely declaring normal elective cases as 'Emergencies' to bypass referral ceilings, polyclinic wait times, and geographical restrictions.</p>
-<div style="background:#fff8f0; border-left:4px solid #d4680a; padding:12px 16px; margin:16px 0;">
-  <b style="color:#d4680a;">⚠ Data Gap — FY 2021–2025 records not available in current extract</b><br/>
-  <p style="margin-top:6px;">The Emergency Gateway (E-Flag) dataset currently extracted covers FY 2011–2020 only. A separate extraction targeting FY 2021–2025 is required to populate this pattern. This section will be updated once the FY 2021–2025 emergency bypass data is available from the ECHS database.</p>
-</div>
-<div class="kf-head">What to look for when data is available</div>
-<div class="kf-item"><b>E-Flag Volume Spike:</b> Hospitals with disproportionately high emergency admission rates vs. their specialty profile warrant immediate audit.</div>
-<div class="kf-item"><b>Elective Diagnoses as Emergencies:</b> Flag claims where admission_ailment indicates planned procedures (joint replacement, cataract, dental) but referral_type = 'E'.</div>
-</div>
-""")
+<p><b>Description:</b> Hospitals falsely declaring normal elective cases as 'Emergencies' to bypass referral ceilings, polyclinic wait times, and geographical restrictions.
+This pattern isolates high-value claims (billed amount &ge; ₹1,00,000) processed through the Emergency Gateway.</p>
+<div class="tc">Table 10.1 — Top Hospitals Exploiting the Emergency Gateway (Top 15)</div>
+<table class="dt">
+{th("Hospital Name","Emergency Claims","Claimed (₹ Cr)","Deducted (₹ Cr)","Ded %")}
+<tbody>""")
+    for _, row in p10.iterrows():
+        pct = (row['deducted']/row['billed']*100) if row['billed'] else 0
+        H.append(f"<tr><td><b>{str(row['registered_hospital_name'])[:45]}</b></td>"
+                 f"<td>{fmt(row['claims'])}</td>"
+                 f"<td>{cr(row['billed'])}</td><td>{cr(row['deducted'])}</td>"
+                 f"<td>{pct:.2f}%</td></tr>")
+    H.append(f"""</tbody></table>
+<div class="kf-head">Key Findings</div>
+<div class="kf-item"><b>Emergency Gateway Exploitation:</b> Private hospitals route high-value elective procedures through the Emergency Gateway (E-Flag) to avoid polyclinic prior-approval checks. <b>{p10.iloc[0]['registered_hospital_name'][:25]}</b> leads this category with <b>{fmt(p10.iloc[0]['claims'])}</b> emergency gateway claims.</div>
+<div class="kf-item"><b>System Exposure:</b> A total of <b>{fmt(len(df_10))} claims</b> were flagged under this pattern across FY 2021-2025.</div>
+</div>""")
 
 # ── CONSOLIDATED SUMMARY ──────────────────────────────────────────────────────
 def pct_str(num, den):
@@ -708,13 +722,13 @@ H.append(f"""
   <tr><td><b>Pattern 1 (High Deduction Hospitals)</b></td><td>{fmt(p1_total_claims)} Claims</td><td>₹{p1_claimed_cr:,.2f} Cr</td><td>₹{p1_deducted_cr:,.2f} Cr</td><td>{pct_str(p1_deducted_cr, p1_claimed_cr)}</td></tr>
   <tr><td><b>Pattern 2 (Room Upgrade Anomalies)</b></td><td>{fmt(len(df_2))} Claims</td><td>{cr(gs(df_2,'billed_amount'))}</td><td>{cr(gs(df_2,'deducted_amount'))}</td><td>{pct_str(gs(df_2,'deducted_amount'), gs(df_2,'billed_amount'))}</td></tr>
   <tr><td><b>Pattern 3 (Ghost Admissions)</b></td><td>{fmt(len(df_3))} Claims</td><td>{cr(gs(df_3,'billed_amount'))}</td><td>{cr(gs(df_3,'deducted_amount'))}</td><td>{pct_str(gs(df_3,'deducted_amount'), gs(df_3,'billed_amount'))}</td></tr>
-  <tr><td><b>Pattern 4 (Y-Flag Bypass)</b></td><td>{fmt(len(df_4))} Claims</td><td style="color:#999">N/A</td><td>{cr(gs(df_4,'deducted_amount'))}</td><td style="color:#999">—</td></tr>
-  <tr><td><b>Pattern 5 (U-Flag Anomaly)</b></td><td>{fmt(len(df_5))} Claims</td><td style="color:#999">N/A</td><td>{cr(gs(df_5,'deducted_amount'))}</td><td style="color:#999">—</td></tr>
+  <tr><td><b>Pattern 4 (Y-Flag Bypass)</b></td><td>{fmt(len(df_4))} Claims</td><td>{cr(gs(df_4,'billed_amount'))}</td><td>{cr(gs(df_4,'deducted_amount'))}</td><td>{pct_str(gs(df_4,'deducted_amount'), gs(df_4,'billed_amount'))}</td></tr>
+  <tr><td><b>Pattern 5 (U-Flag Anomaly)</b></td><td>{fmt(len(df_5))} Claims</td><td>{cr(gs(df_5,'billed_amount'))}</td><td>{cr(gs(df_5,'deducted_amount'))}</td><td>{pct_str(gs(df_5,'deducted_amount'), gs(df_5,'billed_amount'))}</td></tr>
   <tr><td><b>Pattern 6 (IPD/OPD Reversal)</b></td><td>{fmt(len(df_6))} Claims</td><td>{cr(gs(df_6,'billed_amount'))}</td><td>{cr(gs(df_6,'deducted_amount'))}</td><td>{pct_str(gs(df_6,'deducted_amount'), gs(df_6,'billed_amount'))}</td></tr>
   <tr><td><b>Pattern 7 (NMI Loophole)</b></td><td>{fmt(len(df_7))} Claims</td><td>{cr(gs(df_7,'total_billed_cost'))}</td><td>{cr(gs(df_7,'total_billed_cost')-gs(df_7,'total_sanctioned_cost'))}</td><td>{pct_str(gs(df_7,'total_billed_cost')-gs(df_7,'total_sanctioned_cost'), gs(df_7,'total_billed_cost'))}</td></tr>
   <tr><td><b>Pattern 8 (Bait &amp; Switch)</b></td><td>{fmt(len(df_8))} Claims</td><td>{cr(gs(df_8,'final_billed_amount'))}</td><td>{cr(gs(df_8,'final_billed_amount')-gs(df_8,'final_approved_amount'))}</td><td>{pct_str(gs(df_8,'final_billed_amount')-gs(df_8,'final_approved_amount'), gs(df_8,'final_billed_amount'))}</td></tr>
-  <tr><td><b>Pattern 9 (Stay Extension)</b></td><td>{fmt(len(df_9))} Cases</td><td>{cr(gs(df_9,'total_billed_amount'))}</td><td style="color:#999">—</td><td style="color:#999">—</td></tr>
-  <tr><td><b>Pattern 10 (Emergency Gateway)</b></td><td colspan="4" style="color:#d4680a;font-style:italic;">FY 2021–2025 data not yet extracted — pending separate DB query</td></tr>
+  <tr><td><b>Pattern 9 (Stay Extension)</b></td><td>{fmt(len(df_9))} Cases</td><td>{cr(gs(df_9,'total_billed_amount'))}</td><td>{cr(gs(df_9,'total_billed_amount')-gs(df_9,'total_approved_amount'))}</td><td>{pct_str(gs(df_9,'total_billed_amount')-gs(df_9,'total_approved_amount'), gs(df_9,'total_billed_amount'))}</td></tr>
+  <tr><td><b>Pattern 10 (Emergency Gateway)</b></td><td>{fmt(len(df_10))} Claims</td><td>{cr(gs(df_10,'total_billed_amount'))}</td><td>{cr(gs(df_10,'deducted_amount'))}</td><td>{pct_str(gs(df_10,'deducted_amount'), gs(df_10,'total_billed_amount'))}</td></tr>
   <tr style="background:{NAV};color:#fff;"><td><b style="color:#fff;">Total Forensic Exposure</b></td><td style="color:#fff;">{fmt(total_anomalies)} Cases</td><td style="color:#fff;">₹{kpi_claimed_cr:,.2f} Cr</td><td style="color:#fff;">₹{kpi_deducted_cr:,.2f} Cr</td><td style="color:#fff;">{kpi_ded_pct:.2f}%</td></tr>
 </tbody>
 </table>

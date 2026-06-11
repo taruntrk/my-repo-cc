@@ -42,7 +42,7 @@ def extract_pattern_5_u_flag():
         
         c.CI_CARD_ROOM_TYPE as entitled_room,
         c.CI_ROOM_TYPE_ID as billed_room,
-        c.CI_APPROX_COST as billed_amount,
+        cs.CS_GR_CLAIM_AMT as billed_amount,
         cs.CS_UTI_APP_AMT as approved_amount,
         (cs.CS_GR_CLAIM_AMT - cs.CS_UTI_APP_AMT) as deducted_amount
     FROM claim_intimation c
