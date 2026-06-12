@@ -153,9 +153,9 @@ def run_local_fallback():
     print("\n⚠️ Database unreachable. Falling back to local file processing...")
     
     # 1. Locate the main claims data file
-    claims_files = glob.glob(os.path.join(BASE_DIR, 'new_data/new_08b_gender_relation_claims_*.csv'))
+    claims_files = glob.glob(os.path.join(BASE_DIR, 'new_data/new_05b_regional_all_claims_*.csv'))
     if not claims_files:
-        print("❌ Error: Could not find new_08b_gender_relation_claims_*.csv in new_data/")
+        print("❌ Error: Could not find new_05b_regional_all_claims_*.csv in new_data/")
         sys.exit(1)
     
     main_csv = claims_files[0]
@@ -165,35 +165,38 @@ def run_local_fallback():
     print("\nProcessing Sub-Pattern 1A: Card Sharing...")
     groups = collections.defaultdict(list)
     with open(main_csv, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        reader = csv.reader(f)
+        header = next(reader)
         for row in reader:
-            card = row.get('card_number')
-            adm_date = row.get('admission_date', '')[:10]  # YYYY-MM-DD
+            if len(row) < 28:
+                continue
+            card = row[11]
+            adm_date = row[19][:10]  # YYYY-MM-DD
             if card and adm_date:
                 groups[(card, adm_date)].append(row)
                 
     card_sharing_cases = []
     for (card, adm_date), rows in groups.items():
         if len(rows) > 1:
-            hospitals = {r['hospital_id'] for r in rows}
+            hospitals = {r[3] for r in rows} # index 3 is hospital_id
             if len(hospitals) > 1:
                 # Add pairs of card-sharing claims
                 for i in range(len(rows)):
                     for j in range(i + 1, len(rows)):
-                        if rows[i]['hospital_id'] != rows[j]['hospital_id']:
+                        if rows[i][3] != rows[j][3]:
                             r1, r2 = rows[i], rows[j]
-                            claim_1_amt = float(r1['claimed_amount'] or 0)
-                            claim_2_amt = float(r2['claimed_amount'] or 0)
-                            app_1_amt = float(r1['approved_amount'] or 0)
-                            app_2_amt = float(r2['approved_amount'] or 0)
+                            claim_1_amt = float(r1[25] or 0)
+                            claim_2_amt = float(r2[25] or 0)
+                            app_1_amt = float(r1[26] or 0)
+                            app_2_amt = float(r2[26] or 0)
                             card_sharing_cases.append([
-                                card, adm_date, r1['patient_name'],
-                                r1['hospital_id'], r1['hospital_name'], r1['city'],
-                                r2['hospital_id'], r2['hospital_name'], r2['city'],
-                                r1['claim_id'], r2['claim_id'],
+                                card, adm_date, r1[15], # patient_name is index 15
+                                r1[3], r1[4], r1[5],    # hosp_id, hosp_name, city
+                                r2[3], r2[4], r2[5],    # hosp_id, hosp_name, city
+                                r1[9], r2[9],           # claim_id_1, claim_id_2
                                 claim_1_amt, claim_2_amt,
                                 app_1_amt, app_2_amt,
-                                r1['ailment'], r2['ailment'],
+                                r1[22], r2[22],         # ailment_1, ailment_2
                                 app_1_amt + app_2_amt
                             ])
                             
@@ -209,17 +212,20 @@ def run_local_fallback():
             'approved_1_amt', 'approved_2_amt',
             'ailment_1', 'ailment_2', 'realized_leakage'
         ])
-        writer.writerows(card_sharing_cases[:1000])  # Cap at 1000 rows for report clarity
+        writer.writerows(card_sharing_cases)
     print(f"✓ Saved {len(card_sharing_cases)} rows to {csv_1a}")
     
     # --- SUB-PATTERN 1B: DEMOGRAPHIC MISMATCH ---
     print("\nProcessing Sub-Pattern 1B: Demographic Mismatch...")
     mismatch_cases = []
     with open(main_csv, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        reader = csv.reader(f)
+        next(reader)
         for r in reader:
-            gender = r.get('gender', '').strip().upper()
-            relation = r.get('relationship', '').strip()
+            if len(r) < 28:
+                continue
+            gender = r[17].strip().upper()
+            relation = r[18].strip()
             is_mismatch = False
             anomaly_type = ""
             
@@ -231,12 +237,12 @@ def run_local_fallback():
                 anomaly_type = "Female registered as Male Relationship"
                 
             if is_mismatch:
-                claimed_amount = float(r['claimed_amount'] or 0)
-                approved_amount = float(r['approved_amount'] or 0)
+                claimed_amount = float(r[25] or 0)
+                approved_amount = float(r[26] or 0)
                 mismatch_cases.append([
-                    r['card_number'], r['beneficiary_name'], r['patient_name'],
-                    gender, relation, r['claim_id'], r['admission_date'][:10],
-                    r['hospital_name'], claimed_amount, approved_amount,
+                    r[11], r[12], r[15], # card, beneficiary, patient
+                    gender, relation, r[9], r[19][:10], # gender, relation, claim_id, adm_date
+                    r[4], claimed_amount, approved_amount, # hospital, claimed, approved
                     approved_amount, anomaly_type
                 ])
                 
@@ -249,31 +255,53 @@ def run_local_fallback():
             'hospital_name', 'claimed_amount', 'approved_amount',
             'realized_leakage', 'anomaly_type'
         ])
-        writer.writerows(mismatch_cases[:1000])
+        writer.writerows(mismatch_cases)
     print(f"✓ Saved {len(mismatch_cases)} rows to {csv_1b}")
     
     # --- SUB-PATTERN 1C: DECEASED BENEFICIARY ---
     print("\nProcessing Sub-Pattern 1C: Deceased Beneficiary...")
     deceased_cases = []
+    seen_claims = set()
     
-    # Fallback: Load from existing Anecdotal_1_Lazarus_Post_Death_Billing.csv
-    fallback_dead = '/home/tarun/Downloads/CC/echs_analysis/module_11/data/Anecdotal_1_Lazarus_Post_Death_Billing.csv'
-    if os.path.exists(fallback_dead):
-        with open(fallback_dead, 'r', encoding='utf-8') as f:
+    # Fallback 1: Load from 06_Post_Death_Claims_Lazarus.csv
+    fallback_dead_1 = '/home/tarun/Downloads/CC/echs_analysis/module_11/data/06_Post_Death_Claims_Lazarus.csv'
+    if os.path.exists(fallback_dead_1):
+        with open(fallback_dead_1, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                claim_id = r.get('claim_id')
+                if claim_id and claim_id not in seen_claims:
+                    seen_claims.add(claim_id)
+                    claimed_amt = float(r.get('claimed_amount') or 0)
+                    approved_amt = float(r.get('approved_amount') or 0)
+                    deceased_cases.append([
+                        r.get('card_number'), r.get('patient_name'), r.get('death_date_in_claim'),
+                        claim_id, r.get('admission_date'), r.get('admission_date'), # approx discharge
+                        r.get('hospital_name'), r.get('treating_doctor'),
+                        claimed_amt, approved_amt, approved_amt
+                    ])
+                    
+    # Fallback 2: Load from Anecdotal_1_Lazarus_Post_Death_Billing.csv
+    fallback_dead_2 = '/home/tarun/Downloads/CC/echs_analysis/module_11/data/Anecdotal_1_Lazarus_Post_Death_Billing.csv'
+    if os.path.exists(fallback_dead_2):
+        with open(fallback_dead_2, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             header = next(reader)
             for row in reader:
                 if len(row) >= 5:
                     dec_pat_id = row[0]
-                    dod = row[1]
-                    zombie_adm = row[2]
-                    hosp = row[3]
-                    amt = float(row[4] or 0)
-                    deceased_cases.append([
-                        dec_pat_id, dec_pat_id, dod, 'CLAIM_' + dec_pat_id[-5:],
-                        zombie_adm, zombie_adm, hosp, 'Dr. Collusive',
-                        amt, amt, amt
-                    ])
+                    claim_id = 'CLAIM_' + dec_pat_id[-5:]
+                    if claim_id not in seen_claims:
+                        seen_claims.add(claim_id)
+                        dod = row[1]
+                        zombie_adm = row[2]
+                        hosp = row[3]
+                        amt = float(row[4] or 0)
+                        deceased_cases.append([
+                            dec_pat_id, dec_pat_id, dod, claim_id,
+                            zombie_adm, zombie_adm, hosp, 'Dr. Collusive',
+                            amt, amt, amt
+                        ])
     
     csv_1c = os.path.join(SUB_1C_DIR, 'pat1c_deceased_beneficiary_details.csv')
     with open(csv_1c, 'w', newline='', encoding='utf-8') as f:
