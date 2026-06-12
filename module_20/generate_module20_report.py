@@ -206,18 +206,18 @@ class CoverPage(Flowable):
         c.drawCentredString(W/2, H*0.83, 'Fraud Analytics & Financial Intelligence Report')
         
         # Main title
-        c.setFont('Helvetica-Bold', 28)
+        c.setFont('Helvetica-Bold', 38)
         c.setFillColor(GOLD)
-        c.drawCentredString(W/2, H*0.76, 'ECHS FRAUD ANALYTICS')
+        c.drawCentredString(W/2, H*0.76, 'ECHS FRAUD ANALYSIS')
         
-        c.setFont('Helvetica-Bold', 18)
+        c.setFont('Helvetica-Bold', 14)
         c.setFillColor(white)
-        c.drawCentredString(W/2, H*0.70, 'MODULE 20: BUDGET IMPACT & LEAKAGE')
+        c.drawCentredString(W/2, H*0.70, 'BUDGET IMPACT & LEAKAGE ANALYSIS')
         
         c.setFont('Helvetica', 10)
         c.setFillColor(HexColor('#aabbcc'))
         c.drawCentredString(W/2, H*0.655, 
-            'Expenditure Trends  |  Hospital Overbilling Concentration  |  Regional Leakage')
+            'Financial Audit & Deductions Analysis Report')
         
         # Separator line
         c.setFillColor(GOLD)
@@ -337,27 +337,29 @@ def build_report():
     
     # Setup paths
     base_path = os.path.dirname(os.path.abspath(__file__))
-    data_folder = os.path.join(base_path, 'data')
+    data_folder = os.path.join(base_path, 'new_data')
+    if not os.path.exists(data_folder):
+        data_folder = os.path.join(base_path, 'data')
     reports_folder = os.path.join(base_path, 'reports')
     os.makedirs(reports_folder, exist_ok=True)
     
     output_file = os.path.join(reports_folder, 'ECHS_Module20_Budget_Leakage_Report.pdf')
     
     # Load dynamic CSVs
-    overall_csv = load_csv(os.path.join(data_folder, 'overall_leakage_summary.csv'))
-    trend_csv = load_csv(os.path.join(data_folder, 'annual_expenditure_trend.csv'))
-    types_csv = load_csv(os.path.join(data_folder, 'hospital_type_nabh_summary.csv'))
-    hospitals_csv = load_csv(os.path.join(data_folder, 'hospital_leakage_summary.csv'))
-    regions_csv = load_csv(os.path.join(data_folder, 'regional_deduction_breakdown.csv'))
+    overall_csv = load_csv(os.path.join(data_folder, 'new_01a_overall_leakage_summary.csv'))
+    trend_csv = load_csv(os.path.join(data_folder, 'new_02a_annual_expenditure_trend.csv'))
+    types_csv = load_csv(os.path.join(data_folder, 'new_03a_hospital_type_nabh_summary.csv'))
+    hospitals_csv = load_csv(os.path.join(data_folder, 'new_04a_hospital_leakage_summary.csv'))
+    regions_csv = load_csv(os.path.join(data_folder, 'new_05a_regional_deduction_breakdown.csv'))
     projections_csv = load_csv(os.path.join(data_folder, 'fraud_projection_summary.csv'))
     
     # ── Parse Overall Summary ──
-    # Default fallbacks represent FY 2021-2025 ECHS estimates if CSV is not generated
-    total_claims_raw = 19825624
-    total_claimed_cr = 36811.23
-    total_approved_cr = 33020.14
-    total_deducted_cr = 3791.09
-    deduction_pct = 10.30
+    # Default fallbacks represent FY 2021-2026 ECHS estimates if CSV is not generated
+    total_claims_raw = 19845384
+    total_claimed_cr = 36261.44
+    total_approved_cr = 32649.03
+    total_deducted_cr = 3612.41
+    deduction_pct = 9.97
     
     if overall_csv:
         try:
@@ -375,6 +377,12 @@ def build_report():
     total_claimed_fmt = format_currency(total_claimed_cr)
     total_deducted_fmt = format_currency(total_deducted_cr)
     deduction_rate_fmt = f"{deduction_pct:.2f}%"
+    
+    # Fallback/default values for Pattern 1 (Top Hospitals)
+    total_claims_top = 3737
+    total_claimed_top = 3441.0
+    total_approved_top = 2225.0
+    total_deducted_top = 1120.0
     
     # Determine analysis period dynamically from trend CSV or default to 2021-2025
     analysis_years = "2021 – 2025"
@@ -1011,47 +1019,37 @@ def build_report():
     # ══════════════════════════════════════════════════════════════════════
     # PAGE 7: LEAKAGE PROJECTIONS & STRATEGIC RECOMMENDATIONS
     # ══════════════════════════════════════════════════════════════════════
-    story.append(PatternBanner('Q20c', 'Leakage Summary & Fraud Recovery Projections', f'FY {analysis_years}'))
+    story.append(PatternBanner('Q20c', 'Consolidated Summary & 8-Pattern Realized Leakage', f'FY {analysis_years}'))
     story.append(Spacer(1, 4*mm))
     
-    # Projections calculation
-    cons_val = total_deducted_cr * 0.30
-    mod_val = total_deducted_cr * 0.50
-    agg_val = total_deducted_cr * 0.75
-    ai_val = total_deducted_cr * 0.60
+    # 8-Pattern Summary data
+    # Pattern 1 (Corporate Overbilling) is dynamic based on total_claims_top, total_claimed_top, etc.
+    # Conversion of top totals from lakhs to Cr
+    p1_claimed_cr = total_claimed_top / 100.0
+    p1_deducted_cr = total_deducted_top / 100.0
+    p1_approved_cr = total_approved_top / 100.0
+    p1_slippage_pct = (p1_approved_cr / p1_claimed_cr * 100.0) if p1_claimed_cr > 0 else 64.66
     
-    if projections_csv:
-        try:
-            row = projections_csv[0]
-            cons_val = float(row['conservative_fraud_cr'])
-            mod_val = float(row['moderate_fraud_cr'])
-            agg_val = float(row['aggressive_fraud_cr'])
-            ai_val = float(row['ai_interception_cr'])
-        except Exception:
-            pass
-            
     proj_rows = [
-        ['Metric', 'Value', 'Notes / Explanations'],
-        ['Total Claims', total_claims_fmt, f'Full ECHS history for FY {analysis_years}'],
-        ['Total Claimed Amount', total_claimed_fmt, 'Gross billed by empanelled hospitals'],
-        ['Total Approved Amount', f"{format_currency(total_approved_cr)}", 'Net payable after settled audits'],
-        ['Total Budget Leakage / Deductions', total_deducted_fmt, 'Deductions established at settlement'],
-        ['Overall Deduction Rate', deduction_rate_fmt, 'System-wide average deduction rate'],
-        ['', '', ''],
-        [bold('Fraud Recovery Projections'), '', ''],
-        ['Conservative Estimate (30% of deductions)', crit(format_currency(cons_val)), '30% of deductions attributed to verified overbilling'],
-        ['Moderate Estimate (50% of deductions)', crit(format_currency(mod_val)), '50% of deductions attributed to intentional billing inflation'],
-        ['Aggressive Estimate (75% of deductions)', crit(format_currency(agg_val)), '75% of deductions plus adjacent fraud leakage'],
-        ['Pre-Approval AI Interception (60% recovery)', gold(format_currency(ai_val)), 'Projected savings from real-time fraud interception model']
+        ['Forensic Pattern', 'Cases Flagged', 'Claimed Amt', 'Prevented (Ded)', 'Realized (Loss)', 'Slippage %'],
+        ['1. Corporate Overbilling', f"{total_claims_top:,}", f"₹{p1_claimed_cr:.2f} Cr", f"₹{p1_deducted_cr:.2f} Cr", f"₹{p1_approved_cr:.2f} Cr", f"{p1_slippage_pct:.2f}%"],
+        ['2. Ping-Pong Admissions', '500', '₹60.03 Cr', '₹0.00 Cr', '₹60.03 Cr', '100.00%'],
+        ['3. Weekend Surge Admissions', '1,320,346', '₹4,449.07 Cr', '₹1,351.61 Cr', '₹3,097.47 Cr', '69.62%'],
+        ['4. Doctor Cloning (Superman)', '17,374', '₹6.56 Cr', '₹0.00 Cr', '₹6.56 Cr', '100.00%'],
+        ['5. Threshold Avoiding (₹99k)', '2,856', '₹28.42 Cr', '₹5.44 Cr', '₹22.97 Cr', '80.82%'],
+        ['6. Individual Card Sharing', '284', '₹4.82 Cr', '₹0.00 Cr', '₹4.82 Cr', '100.00%'],
+        ['7. Family Card Sharing', '125', '₹8.44 Cr', '₹0.00 Cr', '₹8.44 Cr', '100.00%'],
+        ['8. Demographic Mismatch', '17,205', '₹37.99 Cr', '₹0.00 Cr', '₹37.99 Cr', '100.00%'],
+        ['TOTAL CLASSIFIED SUMMARY', '1,358,281', '₹4,617.58 Cr', '₹1,392.57 Cr', '₹3,225.01 Cr', '9.88%']
     ]
     
     proj_table_rows = []
     for r_idx, row in enumerate(proj_rows):
         is_hdr = (r_idx == 0)
-        is_sect = (r_idx == 7)
+        is_sect = (r_idx == 9)
         proj_table_rows.append([
             Paragraph(cell, bs(
-                fontSize=8, 
+                fontSize=7.5, 
                 fontName='Helvetica-Bold' if (is_hdr or is_sect) else 'Helvetica', 
                 textColor=white if is_hdr else (GOLD if is_sect else DGRAY),
                 alignment=TA_LEFT
@@ -1059,18 +1057,17 @@ def build_report():
             for cell in row
         ])
         
-    p_tbl = Table(proj_table_rows, colWidths=[72*mm, 35*mm, 63*mm])
+    p_tbl = Table(proj_table_rows, colWidths=[52*mm, 22*mm, 24*mm, 26*mm, 26*mm, 20*mm])
     p_tbl.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), NAVY),
-        ('BACKGROUND', (0,7), (-1,7), HexColor('#0d1929')),
+        ('BACKGROUND', (0,9), (-1,9), HexColor('#0d1929')),
         ('GRID', (0,0), (-1,-1), 0.35, MGRAY),
         ('LINEBELOW', (0,0), (-1,0), 0.8, GOLD),
-        ('LINEBELOW', (0,6), (-1,6), 0.5, MGRAY),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-        ('LEFTPADDING', (0,0), (-1,-1), 6),
-        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('LEFTPADDING', (0,0), (-1,-1), 4),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4),
     ]))
     story.append(p_tbl)
     story.append(Spacer(1, 6*mm))

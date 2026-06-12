@@ -1,0 +1,133 @@
+ECHS
+ Data
+ Fraud & Predictive Analytics 
+Requirements for IIT Kanpur 
+from Data upto 31 Mar 26
+O
+bjective
+s
+ 
+T
+o identify fraud patterns
+I
+mprove audit efficiency 
+E
+nable predictive decision-making for policy and system improvements.
+Recommended fraud analytics use-cases which can be carried out on ECHS beneficiary claims data 
+1. Hospital Revenue Inflation & Behavioural Shift Analysis
+- Claim vs Approved variance
+- OPD/IPD ratio shift
+- Emergency admission spikes
+- High pharmacy billing %
+Predictive
+: Flag hospitals likely to inflate bills next FY
+2. Procedure-Level Upcoding Detection
+- Diagnosis vs procedure mismatch
+- Sudden rise in specific packages
+Predictive
+: Identify hospitals shifting toward high-value packages
+3. Doctor-Level Referral & Admission Pattern Analysis
+- IPD conversion rates
+- Referral clustering, Family and repeat referrals in same year patterns
+- Unusual admission patterns
+Predictive
+: Identify referral syndicates
+4. Beneficiary-Level Utilisation Outliers
+- Claims frequency
+- High-cost recurring treatments
+- Multi-hospital usage
+Predictive
+: Flag misuse or collusion of 
+beneficiary
+ and Hospitals
+5. Repeat Admission Analysis
+- Readmissions within 7/15/30 days
+- Same diagnosis repetition
+Predictive
+: Detect staged admissions
+6. Pharmacy Billing Abuse
+- % pharmacy component
+- High-cost drug deviations
+Predictive
+: Identify over-prescribing
+7. Emergency Admission Misuse
+- % emergency admissions
+- Time-of-day clustering
+Predictive
+: Detect misuse of emergency route
+8. Package vs Item Billing Anomaly
+- Package vs item mismatch
+- Double billing
+Predictive
+: Detect billing manipulation
+9. Geo-Spatial Fraud Clustering
+- Fraud hotspots
+- Cross-region referal usage
+Predictive
+: Identify emerging clusters
+10. Time-Series Surge Detection
+- Monthly spikes
+- End-of-quarter surges
+Predictive
+: Detect artificial billing spikes
+11. Duplicate Claims Detection
+- Repeated claims
+- ID duplication
+Predictive
+: Detect identity misuse
+12. Hospital Speciality Misuse
+- Non-core procedures
+Predictive: Detect scope creep
+13. High-Value Claim Risk Scoring
+- ML-based scoring
+Predictive: Real-time fraud detection
+14. Pre-Authorization Deviation
+- Approved vs actual variance
+Predictive: Detect cost escalation
+15. Length of Stay Manipulation
+- LOS vs norms
+Predictive: Detect unnecessary admissions
+16. Diagnostic Test Overutilisation
+- Excessive testing
+Predictive: Detect inflation
+17. Network Collusion Detection
+- Beneficiary-doctor-hospital links
+Predictive: Detect fraud rings
+18. Claim Processing Delay Analysis
+- Delay vs fraud correlation
+Predictive: Prioritize audits
+19. Policy Abuse Patterns
+- Rule exploitation
+Predictive: Policy redesign inputs
+20. Budget Impact & Leakage Estimation
+- Fraud leakage %
+Predictive: Forecast expenditure
+Repeat Events Monthly/ Quarterly and Annually
+.
+Multiple members of a family (ESM and Dependents) treated repeatedly in a month (Exclusion of Dialysis, Chemotherapy and Cataract cases)
+Major procedure performed more than twice in a month
+Ratio of IPD/OPD is more than 1 
+Referral per PC > 30% 
+Ratio of beds in HCO / Emergency Admission is less than 2 
+Repeat admissions of a single patient more than once in a month 
+Repeat OPD visits more than four in a month 
+Simultaneous admission of ESM and dependents in single hosp
+Overlapping admissions of a patient in multiple hosp
+OPD package claimed more than twice for a patient within a month exceeding standard utilisation guidelines
+Emergency admission of a patient more than twice in a month
+Difference between claimed and approved amount in a claim ID is more than 25%
+Quarterly
+.
+Major procedure performed more than twice in a month/ more than three times in a quarter
+Repeat admissions of a single patient more than thrice in a quarter 
+Repeat OPD visits more than twelve in a quarter
+Emergency admission of a patient more than thrice in a quarter
+Only Annually
+.
+Year on year revenue increased by more than 30% 
+Major procedure performed more than five times in a year
+Repeat admissions of a single patient more than six in a year 
+Repeat OPD visits more than twelve in a year 
+OPD package claimed more than five times for a patient a year exceeding standard utilisation guidelines
+Emergency admission of a patient more than 12 in a year
+Claimed versus approved amount in a claimed is more than 25%
